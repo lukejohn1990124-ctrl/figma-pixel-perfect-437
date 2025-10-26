@@ -1,1 +1,4 @@
 project_id = "luwpvzzlrbtttxmfxnkb"
+
+[functions.search-hotels]
+verify_jwt = false
