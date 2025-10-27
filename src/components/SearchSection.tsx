@@ -12,7 +12,7 @@ interface CountryOption {
 }
 
 const SearchSection = () => {
-  const [searchQuery, setSearchQuery] = useState('Hotel in riga with coffee maker in the room with the cost of less than $500 a night');
+  const [searchQuery, setSearchQuery] = useState('Hotel in paris with coffee maker');
   const [isLoading, setIsLoading] = useState(false);
   const [showDateOverlay, setShowDateOverlay] = useState(false);
   const [showCountryOverlay, setShowCountryOverlay] = useState(false);
