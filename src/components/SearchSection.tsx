@@ -17,9 +17,11 @@ const SearchSection = () => {
   const [showDateOverlay, setShowDateOverlay] = useState(false);
   const [showCountryOverlay, setShowCountryOverlay] = useState(false);
   const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
+  const [pendingSearchQuery, setPendingSearchQuery] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleDatePeopleSubmit = (data: {
     checkIn: Date;
@@ -30,15 +32,10 @@ const SearchSection = () => {
   }) => {
     const dateInfo = `from ${format(data.checkIn, 'MMMM dd, yyyy')} to ${format(data.checkOut, 'MMMM dd, yyyy')}, ${data.adults} adult${data.adults > 1 ? 's' : ''}, ${data.rooms} room${data.rooms > 1 ? 's' : ''}${data.kids > 0 ? `, ${data.kids} kid${data.kids > 1 ? 's' : ''}` : ''}`;
     
-    setSearchQuery(prev => {
-      if (prev.toLowerCase().includes(' in ')) {
-        const parts = prev.split(/( in )/i);
-        return `${parts[0]}${parts[1] || ' in '}${parts.slice(2).join('')} ${dateInfo}`;
-      }
-      return `${prev}, ${dateInfo}`;
-    });
+    const finalQuery = `${pendingSearchQuery || searchQuery}, ${dateInfo}`;
+    setSearchQuery(finalQuery);
     setShowDateOverlay(false);
-    proceedWithSearch(`${searchQuery}, ${dateInfo}`);
+    proceedWithSearch(finalQuery);
   };
 
   const handleDateOverlayClose = () => {
@@ -49,15 +46,10 @@ const SearchSection = () => {
     
     const dateInfo = `from ${format(defaultCheckIn, 'MMMM dd, yyyy')} to ${format(defaultCheckOut, 'MMMM dd, yyyy')}, 1 adult, 1 room`;
     
-    setSearchQuery(prev => {
-      if (prev.toLowerCase().includes(' in ')) {
-        const parts = prev.split(/( in )/i);
-        return `${parts[0]}${parts[1] || ' in '}${parts.slice(2).join('')} ${dateInfo}`;
-      }
-      return `${prev}, ${dateInfo}`;
-    });
+    const finalQuery = `${pendingSearchQuery || searchQuery}, ${dateInfo}`;
+    setSearchQuery(finalQuery);
     setShowDateOverlay(false);
-    proceedWithSearch(`${searchQuery}, ${dateInfo}`);
+    proceedWithSearch(finalQuery);
   };
 
   const handleCountrySelect = (option: CountryOption) => {
@@ -67,7 +59,45 @@ const SearchSection = () => {
     );
     setSearchQuery(updatedQuery);
     setShowCountryOverlay(false);
-    setShowDateOverlay(true);
+    setCountryOptions([]);
+  };
+
+  const checkForCountrySuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setShowCountryOverlay(false);
+      setCountryOptions([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('search-hotels', {
+        body: { query }
+      });
+
+      if (error) throw error;
+
+      if (data.needsCountrySelection && data.countryOptions) {
+        setCountryOptions(data.countryOptions);
+        setShowCountryOverlay(true);
+      } else {
+        setShowCountryOverlay(false);
+        setCountryOptions([]);
+      }
+    } catch (error) {
+      console.error('Error checking countries:', error);
+    }
+  };
+
+  const handleQueryChange = (value: string) => {
+    setSearchQuery(value);
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      checkForCountrySuggestions(value);
+    }, 500);
   };
 
   const proceedWithSearch = async (finalQuery: string) => {
@@ -80,14 +110,8 @@ const SearchSection = () => {
 
       if (error) throw error;
 
-      if (data.needsCountrySelection) {
-        setCountryOptions(data.countryOptions);
-        setShowCountryOverlay(true);
-        setIsLoading(false);
-        return;
-      }
-
       if (data.needsDateInfo) {
+        setPendingSearchQuery(finalQuery);
         setShowDateOverlay(true);
         setIsLoading(false);
         return;
@@ -110,6 +134,7 @@ const SearchSection = () => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     
+    setShowCountryOverlay(false);
     await proceedWithSearch(searchQuery);
   };
 
@@ -124,7 +149,7 @@ const SearchSection = () => {
             <textarea
               id="hotel-search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Describe your ideal hotel..."
               className="flex-[1_0_0] self-stretch text-black text-base font-normal leading-6 tracking-[-0.312px] resize-none border-none outline-none bg-transparent"
               disabled={isLoading}
