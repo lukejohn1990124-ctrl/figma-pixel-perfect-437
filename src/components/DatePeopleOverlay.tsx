@@ -35,7 +35,7 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
   };
 
   return (
-    <div className="absolute left-0 right-0 bottom-[calc(100%+20px)] bg-white rounded-[20px] border-4 border-[#1D0FE5] shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[100] p-6 max-sm:left-0 max-sm:right-0">
+    <div className="absolute left-0 top-[20px] right-[180px] bottom-[20px] bg-white rounded-[16px] border border-black shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[100] p-6 max-md:right-[160px] max-sm:right-[140px] overflow-y-auto">
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-black text-[20px] font-semibold max-sm:text-[16px]">Set your own date or use our default date</h3>
         <button
