@@ -84,11 +84,10 @@ serve(async (req) => {
 
     const locationData = await locationResponse.json();
     const cityMatches = locationData.filter((loc: any) => 
-      loc.dest_type === 'city' && 
-      loc.city_name?.toLowerCase() === cityName.toLowerCase()
+      loc.dest_type === 'city'
     ) || [];
 
-      if (cityMatches.length > 1) {
+      if (cityMatches.length > 0) {
         const uniqueCountries = new Map();
         cityMatches.forEach((loc: any) => {
           const key = `${loc.city_name}-${loc.country}`;
@@ -102,7 +101,7 @@ serve(async (req) => {
 
         const countryOptions = Array.from(uniqueCountries.values());
         
-        if (countryOptions.length > 1) {
+        if (countryOptions.length >= 1) {
           return new Response(
             JSON.stringify({ 
               needsCountrySelection: true,
