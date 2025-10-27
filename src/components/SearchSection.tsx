@@ -139,9 +139,9 @@ const SearchSection = () => {
   };
 
   return (
-    <section className="flex flex-col items-center self-stretch pt-[54px] pb-[134px] px-[272px] max-md:pt-10 max-md:pb-[100px] max-md:px-[150px] max-sm:pt-[30px] max-sm:pb-[60px] max-sm:px-5">
-      <div ref={formRef} className="relative flex flex-col items-start gap-2.5 shadow-[0_0_27.8px_9px_rgba(62,146,204,0.50)] p-[3px] rounded-[16.4px] max-sm:w-full">
-        <form onSubmit={handleSearch} className="flex w-[750px] h-[300px] flex-col justify-center items-center gap-3 bg-white p-6 rounded-[16.4px] border-4 border-solid border-[#1D0FE5] max-md:w-[600px] max-md:h-[250px] max-sm:w-full max-sm:h-[200px] max-sm:p-4">
+    <section className="flex flex-col items-center self-stretch pt-[54px] pb-[134px] px-[272px] max-md:pt-10 max-md:pb-[100px] max-md:px-[150px] max-sm:pt-[30px] max-sm:pb-[60px] max-sm:px-5 relative">
+      <div ref={formRef} className="relative flex flex-col items-start gap-2.5 shadow-[0_0_27.8px_9px_rgba(62,146,204,0.50)] p-[3px] rounded-[16.4px] max-sm:w-full z-10">
+        <form onSubmit={handleSearch} className="relative flex w-[750px] h-[300px] flex-col justify-center items-center gap-3 bg-white p-6 rounded-[16.4px] border-4 border-solid border-[#1D0FE5] max-md:w-[600px] max-md:h-[250px] max-sm:w-full max-sm:h-[200px] max-sm:p-4">
           <div className="flex flex-col justify-center items-end gap-2.5 flex-[1_0_0] self-stretch">
             <label htmlFor="hotel-search" className="sr-only">
               Describe your ideal hotel
