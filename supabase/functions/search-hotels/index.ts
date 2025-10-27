@@ -102,7 +102,7 @@ serve(async (req) => {
 
         const countryOptions = Array.from(uniqueCountries.values());
         
-        if (countryOptions.length >= 1) {
+        if (countryOptions.length > 1) {
           return new Response(
             JSON.stringify({ 
               needsCountrySelection: true,
