@@ -83,10 +83,14 @@ serve(async (req) => {
     }
 
     const locationData = await locationResponse.json();
+    console.log(`Location API returned ${locationData.length} results for "${cityName}"`);
+    
     const cityMatches = locationData.filter((loc: any) => 
       loc.dest_type === 'city' && 
       loc.city_name?.toLowerCase() === cityName.toLowerCase()
     ) || [];
+    
+    console.log(`Found ${cityMatches.length} city matches for "${cityName}":`, cityMatches.map((c: any) => `${c.city_name}, ${c.country}`));
 
       if (cityMatches.length > 0) {
         const uniqueCountries = new Map();
