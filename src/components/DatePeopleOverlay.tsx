@@ -35,36 +35,36 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
   };
 
   return (
-    <div className="absolute left-0 top-[20px] right-[180px] bottom-[20px] bg-white rounded-[16px] border border-black shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[100] p-6 max-md:right-[160px] max-sm:right-[140px] overflow-y-auto">
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-black text-[20px] font-semibold max-sm:text-[16px]">Set your own date or use our default date</h3>
+    <div className="absolute left-[20px] top-[20px] right-[180px] bottom-[20px] bg-white rounded-[16px] border border-black shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[100] p-4 max-md:right-[160px] max-sm:right-[140px] max-sm:p-3 overflow-y-auto">
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="text-black text-[16px] font-semibold max-sm:text-[14px]">Set your own date or use our default date</h3>
         <button
           onClick={onClose}
-          className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 ml-4"
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 ml-2"
           aria-label="Close"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="bg-gray-100 rounded-[50px] px-6 py-4 mb-6 max-sm:px-4 max-sm:py-3">
-        <p className="text-gray-700 text-[16px] max-sm:text-[14px]">{summaryText}</p>
+      <div className="bg-gray-100 rounded-[50px] px-4 py-2 mb-3 max-sm:px-3 max-sm:py-2">
+        <p className="text-gray-700 text-[13px] max-sm:text-[12px]">{summaryText}</p>
       </div>
 
-      <div className="flex items-center gap-4 flex-wrap max-sm:gap-3">
+      <div className="flex items-center gap-3 flex-wrap max-sm:gap-2">
         <Popover>
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "flex flex-col items-start gap-1 px-6 py-3 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[200px]"
+                "flex flex-col items-start gap-0.5 px-4 py-2 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[160px]"
               )}
             >
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5" />
-                <span className="text-black text-[14px] font-normal">Check In</span>
+              <div className="flex items-center gap-1.5">
+                <CalendarIcon className="w-4 h-4" />
+                <span className="text-black text-[12px] font-normal">Check In</span>
               </div>
-              <span className="text-black text-[18px] font-bold pl-7">
-                {format(checkIn, 'EEEE, MMM dd')}
+              <span className="text-black text-[14px] font-bold pl-5">
+                {format(checkIn, 'EEE, MMM dd')}
               </span>
             </button>
           </PopoverTrigger>
@@ -84,15 +84,15 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "flex flex-col items-start gap-1 px-6 py-3 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[200px]"
+                "flex flex-col items-start gap-0.5 px-4 py-2 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[160px]"
               )}
             >
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5" />
-                <span className="text-black text-[14px] font-normal">Check Out</span>
+              <div className="flex items-center gap-1.5">
+                <CalendarIcon className="w-4 h-4" />
+                <span className="text-black text-[12px] font-normal">Check Out</span>
               </div>
-              <span className="text-black text-[18px] font-bold pl-7">
-                {format(checkOut, 'EEEE, MMM dd')}
+              <span className="text-black text-[14px] font-bold pl-5">
+                {format(checkOut, 'EEE, MMM dd')}
               </span>
             </button>
           </PopoverTrigger>
@@ -108,70 +108,70 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
           </PopoverContent>
         </Popover>
 
-        <div className="flex items-center gap-2 px-6 py-3 border-2 border-black rounded-[100px] bg-white">
-          <span className="text-black text-[16px] font-normal">Adults</span>
+        <div className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white">
+          <span className="text-black text-[13px] font-normal">Adults</span>
           <button
             type="button"
             onClick={() => setAdults(Math.max(1, adults - 1))}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+            className="flex items-center justify-center w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
           >
-            <span className="text-[20px] font-bold leading-none">−</span>
+            <span className="text-[16px] font-bold leading-none">−</span>
           </button>
-          <span className="text-black text-[20px] font-bold min-w-[24px] text-center">{adults}</span>
+          <span className="text-black text-[16px] font-bold min-w-[20px] text-center">{adults}</span>
           <button
             type="button"
             onClick={() => setAdults(adults + 1)}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+            className="flex items-center justify-center w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
           >
-            <span className="text-[20px] font-bold leading-none">+</span>
+            <span className="text-[16px] font-bold leading-none">+</span>
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 flex-wrap mt-4 max-sm:flex-col max-sm:items-stretch">
-        <div className="flex items-center gap-4 max-sm:gap-3 max-sm:flex-wrap">
-          <div className="flex items-center gap-2 px-6 py-3 border-2 border-black rounded-[100px] bg-white max-sm:px-4 max-sm:py-2">
-            <span className="text-black text-[16px] font-normal">Rooms</span>
+      <div className="flex items-center justify-between gap-3 flex-wrap mt-3 max-sm:flex-col max-sm:items-stretch">
+        <div className="flex items-center gap-3 max-sm:gap-2 max-sm:flex-wrap">
+          <div className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white max-sm:px-3 max-sm:py-1.5">
+            <span className="text-black text-[13px] font-normal">Rooms</span>
             <button
               type="button"
               onClick={() => setRooms(Math.max(1, rooms - 1))}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
             >
-              <span className="text-[20px] font-bold leading-none">−</span>
+              <span className="text-[16px] font-bold leading-none">−</span>
             </button>
-            <span className="text-black text-[20px] font-bold min-w-[24px] text-center">{rooms}</span>
+            <span className="text-black text-[16px] font-bold min-w-[20px] text-center">{rooms}</span>
             <button
               type="button"
               onClick={() => setRooms(rooms + 1)}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
             >
-              <span className="text-[20px] font-bold leading-none">+</span>
+              <span className="text-[16px] font-bold leading-none">+</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2 px-6 py-3 border-2 border-black rounded-[100px] bg-white max-sm:px-4 max-sm:py-2">
-            <span className="text-black text-[16px] font-normal max-sm:text-[14px]">Kids</span>
+          <div className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white max-sm:px-3 max-sm:py-1.5">
+            <span className="text-black text-[13px] font-normal max-sm:text-[12px]">Kids</span>
             <button
               type="button"
               onClick={() => setKids(Math.max(0, kids - 1))}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
             >
-              <span className="text-[20px] font-bold leading-none">−</span>
+              <span className="text-[16px] font-bold leading-none">−</span>
             </button>
-            <span className="text-black text-[20px] font-bold min-w-[24px] text-center">{kids}</span>
+            <span className="text-black text-[16px] font-bold min-w-[20px] text-center">{kids}</span>
             <button
               type="button"
               onClick={() => setKids(kids + 1)}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
             >
-              <span className="text-[20px] font-bold leading-none">+</span>
+              <span className="text-[16px] font-bold leading-none">+</span>
             </button>
           </div>
         </div>
 
         <button
           onClick={handleSubmit}
-          className="flex items-center justify-center px-10 py-4 bg-gradient-to-r from-[#1D4ED8] to-[#A855F7] text-white text-[18px] font-semibold rounded-[100px] hover:opacity-90 transition-opacity max-sm:w-full max-sm:px-6 max-sm:py-3 max-sm:text-[16px]"
+          className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#1D4ED8] to-[#A855F7] text-white text-[15px] font-semibold rounded-[100px] hover:opacity-90 transition-opacity max-sm:w-full max-sm:px-6 max-sm:py-2.5 max-sm:text-[14px]"
         >
           Submit
         </button>
