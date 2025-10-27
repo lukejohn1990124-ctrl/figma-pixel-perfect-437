@@ -77,7 +77,7 @@ const SearchResults = () => {
               Found {results.length} hotel{results.length !== 1 ? 's' : ''} matching your search
             </h2>
             
-            <div className="flex items-center gap-[61px] self-stretch overflow-x-auto pr-5 max-md:gap-10 max-md:flex-wrap max-md:justify-center max-sm:flex-col max-sm:gap-5">
+            <div className="flex flex-col items-center gap-8 self-stretch max-md:gap-6 max-sm:gap-5">
               {results.map((hotel: Hotel) => (
                 <HotelCard
                   key={hotel.hotel_id}

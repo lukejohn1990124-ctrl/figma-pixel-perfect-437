@@ -31,7 +31,19 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: Use Lovable AI to extract search parameters from natural language
+    // Step 1: Check if query has dates, rooms, and people info
+    const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(query);
+    const hasPeopleInfo = /\b(\d+\s*(adult|people|person|guest)|room)\b/i.test(query);
+
+    if (!hasDateInfo || !hasPeopleInfo) {
+      console.log('Missing date or people information');
+      return new Response(
+        JSON.stringify({ needsDateInfo: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Step 2: Use Lovable AI to extract search parameters from natural language
     console.log('Processing search query with AI:', query);
     
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -45,13 +57,15 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a hotel search assistant. Extract location, check-in date (default to today), checkout date (default to tomorrow), adults (default to 2), and key amenities from the user's natural language query. 
+            content: `You are a hotel search assistant. Extract location, check-in date, checkout date, adults, rooms, and key amenities from the user's natural language query. 
+
+Handle city abbreviations like "NY" = "New York", "LA" = "Los Angeles", "SF" = "San Francisco", etc.
 
 For amenities, normalize similar terms (e.g., "big bed" = "large bed", "coffee machine" = "coffee maker", "large tv" = "big tv", "air conditioned" = "air conditioning").
 
-Return JSON with: location (city or place name), checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), adults (number), children (number, default 0), amenities (array of normalized terms).
+Return JSON with: location (city name without country), checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), adults (number), children (number, default 0), rooms (number, default 1), amenities (array of normalized terms).
 
-Example: {"location": "New York", "checkin": "2025-10-27", "checkout": "2025-10-28", "adults": 2, "children": 0, "amenities": ["coffee maker", "large bed", "city view", "air conditioning"]}`
+Example: {"location": "New York", "checkin": "2025-10-28", "checkout": "2025-10-31", "adults": 2, "children": 0, "rooms": 1, "amenities": ["coffee maker", "large bed", "city view", "air conditioning"]}`
           },
           {
             role: 'user',
@@ -75,7 +89,7 @@ Example: {"location": "New York", "checkin": "2025-10-27", "checkout": "2025-10-
     
     console.log('Extracted parameters:', extractedParams);
 
-    // Step 2: Search for location using Booking API
+    // Step 3: Search for location using Booking API
     const locationResponse = await fetch(
       `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(extractedParams.location)}`,
       {
@@ -105,13 +119,46 @@ Example: {"location": "New York", "checkin": "2025-10-27", "checkout": "2025-10-
       );
     }
 
+    // Step 4: Check if we need country disambiguation (multiple cities with same name)
+    const cityMatches = locationData.data.filter((loc: any) => 
+      loc.dest_type === 'city' && 
+      loc.city_name?.toLowerCase() === extractedParams.location.toLowerCase()
+    );
+
+    if (cityMatches.length > 1) {
+      // Multiple cities with same name - need country selection
+      const uniqueCountries = new Map();
+      cityMatches.forEach((loc: any) => {
+        const key = `${loc.city_name}-${loc.country}`;
+        if (!uniqueCountries.has(key)) {
+          uniqueCountries.set(key, {
+            city: loc.city_name,
+            country: loc.country
+          });
+        }
+      });
+
+      const countryOptions = Array.from(uniqueCountries.values());
+      
+      if (countryOptions.length > 1) {
+        console.log('Multiple countries found for city:', extractedParams.location);
+        return new Response(
+          JSON.stringify({ 
+            needsCountrySelection: true,
+            countryOptions
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const destId = locationData.data[0].dest_id;
     
     console.log('Found destination ID:', destId);
 
-    // Step 3: Search for hotels
+    // Step 5: Search for hotels
     const hotelsResponse = await fetch(
-      `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&search_type=CITY&arrival_date=${extractedParams.checkin}&departure_date=${extractedParams.checkout}&adults=${extractedParams.adults}&children_age=${extractedParams.children > 0 ? '0' : ''}&room_qty=1&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=USD`,
+      `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&search_type=CITY&arrival_date=${extractedParams.checkin}&departure_date=${extractedParams.checkout}&adults=${extractedParams.adults}&children_age=${extractedParams.children > 0 ? '0' : ''}&room_qty=${extractedParams.rooms || 1}&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=USD`,
       {
         method: 'GET',
         headers: {
@@ -134,7 +181,7 @@ Example: {"location": "New York", "checkin": "2025-10-27", "checkout": "2025-10-
     
     console.log(`Found ${hotelsData.data?.hotels?.length || 0} hotels`);
 
-    // Step 4: Filter and rank hotels based on amenities if provided
+    // Step 6: Filter and rank hotels based on amenities if provided
     let hotels = hotelsData.data?.hotels || [];
     
     if (extractedParams.amenities && extractedParams.amenities.length > 0 && hotels.length > 0) {

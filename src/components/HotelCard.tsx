@@ -34,8 +34,8 @@ const HotelCard: React.FC<HotelCardProps> = ({
   };
 
   return (
-    <article className="flex h-[6.4cm] items-center shrink-0 max-md:h-auto max-sm:w-full">
-      <div className="flex w-[18cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
+    <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full">
+      <div className="flex w-[17cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
         <img
           src={image}
           alt={`${title} interior`}
