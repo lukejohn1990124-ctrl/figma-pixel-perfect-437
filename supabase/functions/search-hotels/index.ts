@@ -286,12 +286,19 @@ serve(async (req) => {
     }
 
     const destId = locationData[0].dest_id;
+    const lat = locationData[0].latitude;
+    const lon = locationData[0].longitude;
     
-    console.log('Found destination ID:', destId);
+    console.log('Found destination:', { destId, lat, lon, label: locationData[0].label });
+
+    // Create a bounding box around the coordinates (approximately 20km radius)
+    const latDelta = 0.18; // ~20km
+    const lonDelta = 0.18;
+    const bbox = `${lat - latDelta},${lat + latDelta},${lon - lonDelta},${lon + lonDelta}`;
 
     // Step 5: Search for hotels using Booking API
     const hotelsResponse = await fetch(
-      `https://apidojo-booking-v1.p.rapidapi.com/v1/hotels/search?dest_id=${destId}&dest_type=city&checkin_date=${extractedParams.checkin}&checkout_date=${extractedParams.checkout}&adults_number=${extractedParams.adults}&room_number=${extractedParams.rooms || 1}&units=metric&locale=en-us&currency=USD&page_number=0`,
+      `https://apidojo-booking-v1.p.rapidapi.com/v1/properties/list?offset=0&arrival_date=${extractedParams.checkin}&departure_date=${extractedParams.checkout}&guest_qty=${extractedParams.adults}&dest_ids=${destId}&room_qty=${extractedParams.rooms || 1}&search_type=CITY&children_qty=${extractedParams.children || 0}&price_filter_currencycode=USD&order_by=popularity&languagecode=en-us&travel_purpose=leisure`,
       {
         method: 'GET',
         headers: {
