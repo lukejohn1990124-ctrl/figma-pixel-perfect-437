@@ -84,7 +84,8 @@ serve(async (req) => {
 
     const locationData = await locationResponse.json();
     const cityMatches = locationData.filter((loc: any) => 
-      loc.dest_type === 'city'
+      loc.dest_type === 'city' && 
+      loc.city_name?.toLowerCase() === cityName.toLowerCase()
     ) || [];
 
       if (cityMatches.length > 0) {
