@@ -71,7 +71,7 @@ const SearchSection = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('search-hotels', {
-        body: { query }
+        body: { query, checkOnly: true }
       });
 
       if (error) throw error;

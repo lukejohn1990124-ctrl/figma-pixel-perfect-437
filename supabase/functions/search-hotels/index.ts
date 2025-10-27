@@ -29,7 +29,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
+    const { query, checkOnly = false } = await req.json();
     
     if (!query) {
       return new Response(
@@ -49,7 +49,77 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: Check if query has dates, rooms, and people info
+    // Step 1: For checkOnly mode (typing), only check country ambiguity
+    if (checkOnly) {
+      // Extract just the city name from query
+      const cityMatch = query.match(/\bin\s+([a-z\s]+?)(?:\s+with|\s+from|$)/i);
+      if (!cityMatch || cityMatch[1].trim().length < 3) {
+        return new Response(
+          JSON.stringify({ needsCountrySelection: false }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const cityName = cityMatch[1].trim();
+      
+      // Check for country ambiguity
+      const locationResponse = await fetch(
+        `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(cityName)}`,
+        {
+          method: 'GET',
+          headers: {
+            'X-RapidAPI-Key': RAPIDAPI_KEY,
+            'X-RapidAPI-Host': 'booking-com15.p.rapidapi.com'
+          }
+        }
+      );
+
+      if (!locationResponse.ok) {
+        console.error('Location check failed:', locationResponse.status);
+        return new Response(
+          JSON.stringify({ needsCountrySelection: false }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const locationData = await locationResponse.json();
+      const cityMatches = locationData.data?.filter((loc: any) => 
+        loc.dest_type === 'city' && 
+        loc.city_name?.toLowerCase() === cityName.toLowerCase()
+      ) || [];
+
+      if (cityMatches.length > 1) {
+        const uniqueCountries = new Map();
+        cityMatches.forEach((loc: any) => {
+          const key = `${loc.city_name}-${loc.country}`;
+          if (!uniqueCountries.has(key)) {
+            uniqueCountries.set(key, {
+              city: loc.city_name,
+              country: loc.country
+            });
+          }
+        });
+
+        const countryOptions = Array.from(uniqueCountries.values());
+        
+        if (countryOptions.length > 1) {
+          return new Response(
+            JSON.stringify({ 
+              needsCountrySelection: true,
+              countryOptions
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ needsCountrySelection: false }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Step 2: For actual search, check if query has dates, rooms, and people info
     const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(query);
     const hasPeopleInfo = /\b(\d+\s*(adult|people|person|guest)|room)\b/i.test(query);
 
