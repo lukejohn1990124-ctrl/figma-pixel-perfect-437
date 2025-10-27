@@ -57,21 +57,59 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a hotel search assistant. Extract location, check-in date, checkout date, adults, rooms, and key amenities from the user's natural language query. 
-
-Handle city abbreviations like "NY" = "New York", "LA" = "Los Angeles", "SF" = "San Francisco", etc.
-
-For amenities, normalize similar terms (e.g., "big bed" = "large bed", "coffee machine" = "coffee maker", "large tv" = "big tv", "air conditioned" = "air conditioning").
-
-Return JSON with: location (city name without country), checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), adults (number), children (number, default 0), rooms (number, default 1), amenities (array of normalized terms).
-
-Example: {"location": "New York", "checkin": "2025-10-28", "checkout": "2025-10-31", "adults": 2, "children": 0, "rooms": 1, "amenities": ["coffee maker", "large bed", "city view", "air conditioning"]}`
+            content: 'You are a hotel search assistant that extracts structured information from natural language queries about hotel searches.'
           },
           {
             role: 'user',
             content: query
           }
-        ]
+        ],
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: 'extract_search_params',
+              description: 'Extract hotel search parameters from natural language query',
+              parameters: {
+                type: 'object',
+                properties: {
+                  location: {
+                    type: 'string',
+                    description: 'City name without country. Handle abbreviations like NY=New York, LA=Los Angeles, SF=San Francisco'
+                  },
+                  checkin: {
+                    type: 'string',
+                    description: 'Check-in date in YYYY-MM-DD format'
+                  },
+                  checkout: {
+                    type: 'string',
+                    description: 'Check-out date in YYYY-MM-DD format'
+                  },
+                  adults: {
+                    type: 'number',
+                    description: 'Number of adults'
+                  },
+                  children: {
+                    type: 'number',
+                    description: 'Number of children, default 0'
+                  },
+                  rooms: {
+                    type: 'number',
+                    description: 'Number of rooms, default 1'
+                  },
+                  amenities: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Array of amenities. Normalize similar terms: big bed=large bed, coffee machine=coffee maker, large tv=big tv, air conditioned=air conditioning'
+                  }
+                },
+                required: ['location', 'checkin', 'checkout', 'adults'],
+                additionalProperties: false
+              }
+            }
+          }
+        ],
+        tool_choice: { type: 'function', function: { name: 'extract_search_params' } }
       }),
     });
 
@@ -85,14 +123,13 @@ Example: {"location": "New York", "checkin": "2025-10-28", "checkout": "2025-10-
     }
 
     const aiData = await aiResponse.json();
-    let content = aiData.choices[0].message.content.trim();
+    const toolCall = aiData.choices[0].message.tool_calls[0];
+    const extractedParams = JSON.parse(toolCall.function.arguments);
     
-    // Strip markdown code blocks if present
-    if (content.startsWith('```')) {
-      content = content.replace(/```json?\n?/g, '').replace(/```\n?$/g, '').trim();
-    }
-    
-    const extractedParams = JSON.parse(content);
+    // Set defaults
+    extractedParams.children = extractedParams.children || 0;
+    extractedParams.rooms = extractedParams.rooms || 1;
+    extractedParams.amenities = extractedParams.amenities || [];
     
     console.log('Extracted parameters:', extractedParams);
 
@@ -210,29 +247,45 @@ Example: {"location": "New York", "checkin": "2025-10-28", "checkout": "2025-10-
           messages: [
             {
               role: 'system',
-              content: `You are a hotel ranking assistant. Given a list of hotels and desired amenities, rank the hotels by how well they likely match the amenities. Consider semantic similarity (e.g., "coffee maker" matches "coffee machine"). Return a JSON array of hotel indices in order of best to worst match. Example: [2, 0, 5, 1, 3, 4]`
+              content: 'You rank hotels based on how well they match desired amenities.'
             },
             {
               role: 'user',
               content: `Desired amenities: ${extractedParams.amenities.join(', ')}\n\nHotels:\n${JSON.stringify(hotelDescriptions, null, 2)}`
             }
-          ]
+          ],
+          tools: [
+            {
+              type: 'function',
+              function: {
+                name: 'rank_hotels',
+                description: 'Rank hotels by amenity match quality',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    ranked_indices: {
+                      type: 'array',
+                      items: { type: 'number' },
+                      description: 'Array of hotel indices ordered from best to worst match'
+                    }
+                  },
+                  required: ['ranked_indices'],
+                  additionalProperties: false
+                }
+              }
+            }
+          ],
+          tool_choice: { type: 'function', function: { name: 'rank_hotels' } }
         }),
       });
 
       if (rankingResponse.ok) {
         const rankingData = await rankingResponse.json();
-        let rankingContent = rankingData.choices[0].message.content.trim();
-        
-        // Strip markdown code blocks if present
-        if (rankingContent.startsWith('```')) {
-          rankingContent = rankingContent.replace(/```json?\n?/g, '').replace(/```\n?$/g, '').trim();
-        }
-        
-        const rankedIndices = JSON.parse(rankingContent);
+        const rankingToolCall = rankingData.choices[0].message.tool_calls[0];
+        const { ranked_indices } = JSON.parse(rankingToolCall.function.arguments);
         
         // Reorder hotels based on ranking
-        const rankedHotels = rankedIndices.map((idx: number) => hotels[idx]).filter(Boolean);
+        const rankedHotels = ranked_indices.map((idx: number) => hotels[idx]).filter(Boolean);
         hotels = [...rankedHotels, ...hotels.filter((h: any) => !rankedHotels.includes(h))];
         
         console.log('Hotels ranked by amenity match');
