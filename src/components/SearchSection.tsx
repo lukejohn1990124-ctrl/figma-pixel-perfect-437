@@ -44,8 +44,8 @@ const SearchSection = () => {
   const handleDateOverlayClose = () => {
     const defaultCheckIn = new Date();
     defaultCheckIn.setDate(defaultCheckIn.getDate() + 1);
-    const defaultCheckOut = new Date();
-    defaultCheckOut.setDate(defaultCheckOut.getDate() + 4);
+    const defaultCheckOut = new Date(defaultCheckIn);
+    defaultCheckOut.setDate(defaultCheckOut.getDate() + 3);
     
     const dateInfo = `from ${format(defaultCheckIn, 'MMMM dd, yyyy')} to ${format(defaultCheckOut, 'MMMM dd, yyyy')}, 1 adult, 1 room`;
     

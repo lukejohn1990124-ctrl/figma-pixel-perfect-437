@@ -5,6 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to clean JSON responses from markdown code blocks
+function cleanJsonResponse(jsonString: string): string {
+  let cleaned = jsonString.trim();
+  
+  // Remove markdown code blocks if present
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '');
+  }
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '');
+  }
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.replace(/\s*```$/, '');
+  }
+  
+  return cleaned.trim();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -124,7 +142,8 @@ serve(async (req) => {
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices[0].message.tool_calls[0];
-    const extractedParams = JSON.parse(toolCall.function.arguments);
+    const cleanedArgs = cleanJsonResponse(toolCall.function.arguments);
+    const extractedParams = JSON.parse(cleanedArgs);
     
     // Set defaults
     extractedParams.children = extractedParams.children || 0;
@@ -282,7 +301,8 @@ serve(async (req) => {
       if (rankingResponse.ok) {
         const rankingData = await rankingResponse.json();
         const rankingToolCall = rankingData.choices[0].message.tool_calls[0];
-        const { ranked_indices } = JSON.parse(rankingToolCall.function.arguments);
+        const cleanedRankingArgs = cleanJsonResponse(rankingToolCall.function.arguments);
+        const { ranked_indices } = JSON.parse(cleanedRankingArgs);
         
         // Reorder hotels based on ranking
         const rankedHotels = ranked_indices.map((idx: number) => hotels[idx]).filter(Boolean);
