@@ -85,7 +85,14 @@ Example: {"location": "New York", "checkin": "2025-10-28", "checkout": "2025-10-
     }
 
     const aiData = await aiResponse.json();
-    const extractedParams = JSON.parse(aiData.choices[0].message.content);
+    let content = aiData.choices[0].message.content.trim();
+    
+    // Strip markdown code blocks if present
+    if (content.startsWith('```')) {
+      content = content.replace(/```json?\n?/g, '').replace(/```\n?$/g, '').trim();
+    }
+    
+    const extractedParams = JSON.parse(content);
     
     console.log('Extracted parameters:', extractedParams);
 
@@ -215,7 +222,14 @@ Example: {"location": "New York", "checkin": "2025-10-28", "checkout": "2025-10-
 
       if (rankingResponse.ok) {
         const rankingData = await rankingResponse.json();
-        const rankedIndices = JSON.parse(rankingData.choices[0].message.content);
+        let rankingContent = rankingData.choices[0].message.content.trim();
+        
+        // Strip markdown code blocks if present
+        if (rankingContent.startsWith('```')) {
+          rankingContent = rankingContent.replace(/```json?\n?/g, '').replace(/```\n?$/g, '').trim();
+        }
+        
+        const rankedIndices = JSON.parse(rankingContent);
         
         // Reorder hotels based on ranking
         const rankedHotels = rankedIndices.map((idx: number) => hotels[idx]).filter(Boolean);
