@@ -28,132 +28,150 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
   const [rooms, setRooms] = useState(1);
   const [kids, setKids] = useState(0);
 
+  const summaryText = `${format(checkIn, 'EEEE, MMM dd')} - ${format(checkOut, 'EEEE, MMM dd')}, ${adults} adult${adults > 1 ? 's' : ''}, ${rooms} room${rooms > 1 ? 's' : ''}${kids > 0 ? `, ${kids} kid${kids > 1 ? 's' : ''}` : ''}`;
+
   const handleSubmit = () => {
     onSubmit({ checkIn, checkOut, adults, rooms, kids });
   };
 
-  const CounterButton: React.FC<{
-    label: string;
-    value: number;
-    onIncrement: () => void;
-    onDecrement: () => void;
-    min?: number;
-  }> = ({ label, value, onIncrement, onDecrement, min = 0 }) => (
-    <div className="flex items-center gap-3">
-      <span className="text-black text-[16px] font-normal min-w-[60px]">{label}</span>
-      <div className="flex items-center gap-2">
+  return (
+    <div className="absolute left-5 right-5 bottom-[calc(100%+20px)] bg-white rounded-[20px] border-4 border-[#1D0FE5] shadow-lg z-50 p-6">
+      <div className="flex items-start justify-between mb-4">
+        <h3 className="text-black text-[20px] font-semibold">Set your own date or use our default date</h3>
         <button
-          type="button"
-          onClick={onDecrement}
-          disabled={value <= min}
-          className="flex items-center justify-center w-[32px] h-[32px] rounded-full border-2 border-black bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          onClick={onClose}
+          className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 ml-4"
+          aria-label="Close"
         >
-          <span className="text-black text-[20px] font-bold leading-none">−</span>
-        </button>
-        <span className="text-black text-[18px] font-bold min-w-[24px] text-center">{value}</span>
-        <button
-          type="button"
-          onClick={onIncrement}
-          className="flex items-center justify-center w-[32px] h-[32px] rounded-full border-2 border-black bg-white hover:bg-gray-50 transition-colors"
-        >
-          <span className="text-black text-[20px] font-bold leading-none">+</span>
+          <X className="w-6 h-6" />
         </button>
       </div>
-    </div>
-  );
 
-  return (
-    <div className="absolute left-5 right-5 bottom-[calc(100%+20px)] bg-white rounded-[20px] border-4 border-[#1D0FE5] shadow-lg z-50 p-5">
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
-        aria-label="Close"
-      >
-        <X className="w-5 h-5" />
-      </button>
+      <div className="bg-gray-200 rounded-[50px] px-6 py-4 mb-6">
+        <p className="text-gray-700 text-[16px]">{summaryText}</p>
+      </div>
 
-      <div className="flex items-center gap-6 flex-wrap max-md:flex-col max-md:items-stretch">
-        <div className="flex items-center gap-4 max-md:flex-col max-md:items-stretch max-md:gap-3">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[180px]"
-                )}
-              >
-                <CalendarIcon className="w-4 h-4" />
-                <span className="text-black text-[14px] font-normal">
-                  {format(checkIn, 'MMM dd, yyyy')}
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={checkIn}
-                onSelect={(date) => date && setCheckIn(date)}
-                initialFocus
-                disabled={(date) => date < new Date()}
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
+      <div className="flex items-center gap-4 flex-wrap">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "flex flex-col items-start gap-1 px-6 py-3 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[200px]"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                <span className="text-black text-[14px] font-normal">Check In</span>
+              </div>
+              <span className="text-black text-[18px] font-bold pl-7">
+                {format(checkIn, 'EEEE, MMM dd')}
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={checkIn}
+              onSelect={(date) => date && setCheckIn(date)}
+              initialFocus
+              disabled={(date) => date < new Date()}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[180px]"
-                )}
-              >
-                <CalendarIcon className="w-4 h-4" />
-                <span className="text-black text-[14px] font-normal">
-                  {format(checkOut, 'MMM dd, yyyy')}
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={checkOut}
-                onSelect={(date) => date && setCheckOut(date)}
-                initialFocus
-                disabled={(date) => date <= checkIn}
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "flex flex-col items-start gap-1 px-6 py-3 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[200px]"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                <span className="text-black text-[14px] font-normal">Check Out</span>
+              </div>
+              <span className="text-black text-[18px] font-bold pl-7">
+                {format(checkOut, 'EEEE, MMM dd')}
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={checkOut}
+              onSelect={(date) => date && setCheckOut(date)}
+              initialFocus
+              disabled={(date) => date <= checkIn}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <div className="flex items-center gap-2 px-6 py-3 border-2 border-black rounded-[100px] bg-white">
+          <span className="text-black text-[16px] font-normal">Adults</span>
+          <button
+            type="button"
+            onClick={() => setAdults(Math.max(1, adults - 1))}
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+          >
+            <span className="text-[20px] font-bold leading-none">−</span>
+          </button>
+          <span className="text-black text-[20px] font-bold min-w-[24px] text-center">{adults}</span>
+          <button
+            type="button"
+            onClick={() => setAdults(adults + 1)}
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+          >
+            <span className="text-[20px] font-bold leading-none">+</span>
+          </button>
         </div>
+      </div>
 
-        <div className="flex items-center gap-4 max-md:flex-col max-md:items-stretch max-md:gap-3">
-          <CounterButton
-            label="Adults"
-            value={adults}
-            onIncrement={() => setAdults(adults + 1)}
-            onDecrement={() => setAdults(adults - 1)}
-            min={1}
-          />
-          
-          <CounterButton
-            label="Rooms"
-            value={rooms}
-            onIncrement={() => setRooms(rooms + 1)}
-            onDecrement={() => setRooms(rooms - 1)}
-            min={1}
-          />
-          
-          <CounterButton
-            label="Kids"
-            value={kids}
-            onIncrement={() => setKids(kids + 1)}
-            onDecrement={() => setKids(kids - 1)}
-            min={0}
-          />
+      <div className="flex items-center justify-between gap-4 flex-wrap mt-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-6 py-3 border-2 border-black rounded-[100px] bg-white">
+            <span className="text-black text-[16px] font-normal">Rooms</span>
+            <button
+              type="button"
+              onClick={() => setRooms(Math.max(1, rooms - 1))}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-[20px] font-bold leading-none">−</span>
+            </button>
+            <span className="text-black text-[20px] font-bold min-w-[24px] text-center">{rooms}</span>
+            <button
+              type="button"
+              onClick={() => setRooms(rooms + 1)}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-[20px] font-bold leading-none">+</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 px-6 py-3 border-2 border-black rounded-[100px] bg-white">
+            <span className="text-black text-[16px] font-normal">Kids</span>
+            <button
+              type="button"
+              onClick={() => setKids(Math.max(0, kids - 1))}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-[20px] font-bold leading-none">−</span>
+            </button>
+            <span className="text-black text-[20px] font-bold min-w-[24px] text-center">{kids}</span>
+            <button
+              type="button"
+              onClick={() => setKids(kids + 1)}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-[20px] font-bold leading-none">+</span>
+            </button>
+          </div>
         </div>
 
         <button
           onClick={handleSubmit}
-          className="ml-auto flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#7C3AED] to-[#A855F7] text-white text-[16px] font-bold rounded-[100px] hover:opacity-90 transition-opacity max-md:ml-0 max-md:w-full"
+          className="flex items-center justify-center px-10 py-4 bg-gradient-to-r from-[#1D4ED8] to-[#A855F7] text-white text-[18px] font-semibold rounded-[100px] hover:opacity-90 transition-opacity"
         >
           Submit
         </button>
