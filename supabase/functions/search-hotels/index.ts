@@ -92,7 +92,8 @@ serve(async (req) => {
     }
 
     const locationData = await locationResponse.json();
-    console.log(`Location API returned ${locationData.length} results for "${cityName}"`);
+    console.log(`Location API returned ${locationData.length} results for "${cityName}":`, 
+      locationData.map((loc: any) => `${loc.label} (${loc.dest_type})`));
     
     const cityMatches = locationData.filter((loc: any) => 
       loc.dest_type === 'city' && 
