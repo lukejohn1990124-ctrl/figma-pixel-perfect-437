@@ -62,31 +62,31 @@ serve(async (req) => {
 
       const cityName = cityMatch[1].trim();
       
-      // Check for country ambiguity
-      const locationResponse = await fetch(
-        `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(cityName)}`,
-        {
-          method: 'GET',
-          headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': 'booking-com15.p.rapidapi.com'
-          }
+    // Step 3: Search for location using Booking API
+    const locationResponse = await fetch(
+      `https://apidojo-booking-v1.p.rapidapi.com/locations/auto-complete?text=${encodeURIComponent(cityName)}&languagecode=en-us`,
+      {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Host': 'apidojo-booking-v1.p.rapidapi.com'
         }
-      );
-
-      if (!locationResponse.ok) {
-        console.error('Location check failed:', locationResponse.status);
-        return new Response(
-          JSON.stringify({ needsCountrySelection: false }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
       }
+    );
 
-      const locationData = await locationResponse.json();
-      const cityMatches = locationData.data?.filter((loc: any) => 
-        loc.dest_type === 'city' && 
-        loc.city_name?.toLowerCase() === cityName.toLowerCase()
-      ) || [];
+    if (!locationResponse.ok) {
+      console.error('Location check failed:', locationResponse.status);
+      return new Response(
+        JSON.stringify({ needsCountrySelection: false }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const locationData = await locationResponse.json();
+    const cityMatches = locationData.filter((loc: any) => 
+      loc.dest_type === 'city' && 
+      loc.city_name?.toLowerCase() === cityName.toLowerCase()
+    ) || [];
 
       if (cityMatches.length > 1) {
         const uniqueCountries = new Map();
@@ -224,12 +224,12 @@ serve(async (req) => {
 
     // Step 3: Search for location using Booking API
     const locationResponse = await fetch(
-      `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(extractedParams.location)}`,
+      `https://apidojo-booking-v1.p.rapidapi.com/locations/auto-complete?text=${encodeURIComponent(extractedParams.location)}&languagecode=en-us`,
       {
         method: 'GET',
         headers: {
           'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'booking-com15.p.rapidapi.com'
+          'X-RapidAPI-Host': 'apidojo-booking-v1.p.rapidapi.com'
         }
       }
     );
@@ -245,7 +245,7 @@ serve(async (req) => {
 
     const locationData = await locationResponse.json();
     
-    if (!locationData.data || locationData.data.length === 0) {
+    if (!locationData || locationData.length === 0) {
       return new Response(
         JSON.stringify({ hotels: [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -253,7 +253,7 @@ serve(async (req) => {
     }
 
     // Step 4: Check if we need country disambiguation (multiple cities with same name)
-    const cityMatches = locationData.data.filter((loc: any) => 
+    const cityMatches = locationData.filter((loc: any) => 
       loc.dest_type === 'city' && 
       loc.city_name?.toLowerCase() === extractedParams.location.toLowerCase()
     );
@@ -285,18 +285,18 @@ serve(async (req) => {
       }
     }
 
-    const destId = locationData.data[0].dest_id;
+    const destId = locationData[0].dest_id;
     
     console.log('Found destination ID:', destId);
 
-    // Step 5: Search for hotels
+    // Step 5: Search for hotels using Booking API
     const hotelsResponse = await fetch(
-      `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?dest_id=${destId}&search_type=CITY&arrival_date=${extractedParams.checkin}&departure_date=${extractedParams.checkout}&adults=${extractedParams.adults}&children_age=${extractedParams.children > 0 ? '0' : ''}&room_qty=${extractedParams.rooms || 1}&page_number=1&units=metric&temperature_unit=c&languagecode=en-us&currency_code=USD`,
+      `https://apidojo-booking-v1.p.rapidapi.com/v1/hotels/search?dest_id=${destId}&dest_type=city&checkin_date=${extractedParams.checkin}&checkout_date=${extractedParams.checkout}&adults_number=${extractedParams.adults}&room_number=${extractedParams.rooms || 1}&units=metric&locale=en-us&currency=USD&page_number=0`,
       {
         method: 'GET',
         headers: {
           'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'booking-com15.p.rapidapi.com'
+          'X-RapidAPI-Host': 'apidojo-booking-v1.p.rapidapi.com'
         }
       }
     );
@@ -312,10 +312,10 @@ serve(async (req) => {
 
     const hotelsData = await hotelsResponse.json();
     
-    console.log(`Found ${hotelsData.data?.hotels?.length || 0} hotels`);
+    console.log(`Found ${hotelsData.result?.length || 0} hotels`);
 
     // Step 6: Filter and rank hotels based on amenities if provided
-    let hotels = hotelsData.data?.hotels || [];
+    let hotels = hotelsData.result || [];
     
     if (extractedParams.amenities && extractedParams.amenities.length > 0 && hotels.length > 0) {
       // Use AI to rank hotels based on amenity matching
