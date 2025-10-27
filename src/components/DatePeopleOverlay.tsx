@@ -56,7 +56,7 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "flex flex-col items-start gap-0.5 px-4 py-2 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[160px]"
+                "flex flex-col items-start gap-0.5 px-4 py-2 border border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[160px]"
               )}
             >
               <div className="flex items-center gap-1.5">
@@ -84,7 +84,7 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "flex flex-col items-start gap-0.5 px-4 py-2 border-2 border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[160px]"
+                "flex flex-col items-start gap-0.5 px-4 py-2 border border-black rounded-[100px] bg-white hover:bg-gray-50 transition-colors min-w-[160px]"
               )}
             >
               <div className="flex items-center gap-1.5">
@@ -108,7 +108,7 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
           </PopoverContent>
         </Popover>
 
-        <div className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white">
+        <div className="flex items-center gap-2 px-4 py-2 border border-black rounded-[100px] bg-white">
           <span className="text-black text-[13px] font-normal">Adults</span>
           <button
             type="button"
@@ -130,7 +130,7 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
 
       <div className="flex items-center justify-between gap-3 flex-wrap mt-3 max-sm:flex-col max-sm:items-stretch">
         <div className="flex items-center gap-3 max-sm:gap-2 max-sm:flex-wrap">
-          <div className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white max-sm:px-3 max-sm:py-1.5">
+          <div className="flex items-center gap-2 px-4 py-2 border border-black rounded-[100px] bg-white max-sm:px-3 max-sm:py-1.5">
             <span className="text-black text-[13px] font-normal">Rooms</span>
             <button
               type="button"
@@ -149,7 +149,7 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
             </button>
           </div>
 
-          <div className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded-[100px] bg-white max-sm:px-3 max-sm:py-1.5">
+          <div className="flex items-center gap-2 px-4 py-2 border border-black rounded-[100px] bg-white max-sm:px-3 max-sm:py-1.5">
             <span className="text-black text-[13px] font-normal max-sm:text-[12px]">Kids</span>
             <button
               type="button"
@@ -171,9 +171,9 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
 
         <button
           onClick={handleSubmit}
-          className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#1D4ED8] to-[#A855F7] text-white text-[15px] font-semibold rounded-[100px] hover:opacity-90 transition-opacity max-sm:w-full max-sm:px-6 max-sm:py-2.5 max-sm:text-[14px]"
+          className="flex items-center justify-center px-8 py-3 bg-black text-white text-[15px] font-semibold rounded-[100px] hover:bg-gray-800 transition-colors max-sm:w-full max-sm:px-6 max-sm:py-2.5 max-sm:text-[14px]"
         >
-          Submit
+          Set
         </button>
       </div>
     </div>
