@@ -51,16 +51,25 @@ serve(async (req) => {
 
     // Step 1: For checkOnly mode (typing), only check country ambiguity
     if (checkOnly) {
-      // Extract just the city name from query
-      const cityMatch = query.match(/\bin\s+([a-z\s]+?)(?:\s+with|\s+from|$)/i);
-      if (!cityMatch || cityMatch[1].trim().length < 3) {
+      // Extract city name - handle various patterns
+      let cityName = '';
+      
+      // Try pattern: "in [city]"
+      const cityMatch = query.match(/\bin\s+([a-z\s]+?)(?:\s+with|\s+from|\s+for|\s+on|$)/i);
+      if (cityMatch && cityMatch[1].trim().length >= 3) {
+        // Clean up the city name - take only the first 1-3 words
+        const words = cityMatch[1].trim().split(/\s+/);
+        cityName = words.slice(0, Math.min(3, words.length)).join(' ');
+      }
+      
+      if (!cityName) {
         return new Response(
           JSON.stringify({ needsCountrySelection: false }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const cityName = cityMatch[1].trim();
+      console.log(`Checking city: "${cityName}"`);
       
     // Step 3: Search for location using Booking API
     const locationResponse = await fetch(
