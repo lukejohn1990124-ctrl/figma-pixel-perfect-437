@@ -57,9 +57,6 @@ const SearchSection = () => {
     setSearchQuery(updatedQuery);
     setShowCountryOverlay(false);
     setCountryOptions([]);
-    
-    // After country selection, show date overlay
-    setShowDateOverlay(true);
   };
 
   const checkForCountrySuggestions = async (query: string, showOverlay: boolean = true) => {
