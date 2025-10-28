@@ -101,18 +101,23 @@ serve(async (req) => {
     const locationData = await locationResponse.json();
     console.log(`Location API returned ${locationData.length} results for "${cityName}"`);
     
-    // Get all city results and extract unique city/country combinations
-    const cityResults = locationData.filter((loc: any) => loc.dest_type === 'city');
-    
-    if (cityResults.length > 0) {
+    // Get all location results and extract unique city/country combinations
+    // Don't filter by dest_type - include all results (cities, regions, etc.)
+    if (locationData.length > 0) {
       const uniqueCountries = new Map();
-      cityResults.forEach((loc: any) => {
-        const key = `${loc.city_name}-${loc.country}`;
-        if (!uniqueCountries.has(key)) {
-          uniqueCountries.set(key, {
-            city: loc.city_name,
-            country: loc.country
-          });
+      locationData.forEach((loc: any) => {
+        // Use city_name if available, otherwise use label
+        const cityName = loc.city_name || loc.label || loc.name;
+        const country = loc.country;
+        
+        if (cityName && country) {
+          const key = `${cityName}-${country}`;
+          if (!uniqueCountries.has(key)) {
+            uniqueCountries.set(key, {
+              city: cityName,
+              country: country
+            });
+          }
         }
       });
 
