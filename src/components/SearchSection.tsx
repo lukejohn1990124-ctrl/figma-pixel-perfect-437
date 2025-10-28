@@ -40,9 +40,9 @@ const SearchSection = () => {
     const defaultCheckIn = new Date();
     defaultCheckIn.setDate(defaultCheckIn.getDate() + 1);
     const defaultCheckOut = new Date(defaultCheckIn);
-    defaultCheckOut.setDate(defaultCheckOut.getDate() + 3);
+    defaultCheckOut.setDate(defaultCheckOut.getDate() + 2);
     
-    const dateInfo = `from ${format(defaultCheckIn, 'MMMM dd, yyyy')} to ${format(defaultCheckOut, 'MMMM dd, yyyy')}, 1 adult, 1 room`;
+    const dateInfo = `from ${format(defaultCheckIn, 'MMMM dd, yyyy')} to ${format(defaultCheckOut, 'MMMM dd, yyyy')}, 2 adults, 1 room`;
     
     const finalQuery = `${searchQuery}, ${dateInfo}`;
     setSearchQuery(finalQuery);

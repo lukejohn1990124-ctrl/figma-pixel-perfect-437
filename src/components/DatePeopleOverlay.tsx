@@ -20,11 +20,11 @@ const DatePeopleOverlay: React.FC<DatePeopleOverlayProps> = ({ onSubmit, onClose
   const defaultCheckIn = new Date();
   defaultCheckIn.setDate(defaultCheckIn.getDate() + 1);
   const defaultCheckOut = new Date(defaultCheckIn);
-  defaultCheckOut.setDate(defaultCheckOut.getDate() + 3);
+  defaultCheckOut.setDate(defaultCheckOut.getDate() + 2);
 
   const [checkIn, setCheckIn] = useState<Date>(defaultCheckIn);
   const [checkOut, setCheckOut] = useState<Date>(defaultCheckOut);
-  const [adults, setAdults] = useState(1);
+  const [adults, setAdults] = useState(2);
   const [rooms, setRooms] = useState(1);
   const [kids, setKids] = useState(0);
 
