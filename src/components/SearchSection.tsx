@@ -17,11 +17,9 @@ const SearchSection = () => {
   const [showDateOverlay, setShowDateOverlay] = useState(false);
   const [showCountryOverlay, setShowCountryOverlay] = useState(false);
   const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
-  const [pendingSearchQuery, setPendingSearchQuery] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleDatePeopleSubmit = (data: {
     checkIn: Date;
@@ -32,10 +30,9 @@ const SearchSection = () => {
   }) => {
     const dateInfo = `from ${format(data.checkIn, 'MMMM dd, yyyy')} to ${format(data.checkOut, 'MMMM dd, yyyy')}, ${data.adults} adult${data.adults > 1 ? 's' : ''}, ${data.rooms} room${data.rooms > 1 ? 's' : ''}${data.kids > 0 ? `, ${data.kids} kid${data.kids > 1 ? 's' : ''}` : ''}`;
     
-    const finalQuery = `${pendingSearchQuery || searchQuery}, ${dateInfo}`;
+    const finalQuery = `${searchQuery}, ${dateInfo}`;
     setSearchQuery(finalQuery);
     setShowDateOverlay(false);
-    proceedWithSearch(finalQuery);
   };
 
   const handleDateOverlayClose = () => {
@@ -46,10 +43,9 @@ const SearchSection = () => {
     
     const dateInfo = `from ${format(defaultCheckIn, 'MMMM dd, yyyy')} to ${format(defaultCheckOut, 'MMMM dd, yyyy')}, 1 adult, 1 room`;
     
-    const finalQuery = `${pendingSearchQuery || searchQuery}, ${dateInfo}`;
+    const finalQuery = `${searchQuery}, ${dateInfo}`;
     setSearchQuery(finalQuery);
     setShowDateOverlay(false);
-    proceedWithSearch(finalQuery);
   };
 
   const handleCountrySelect = (option: CountryOption) => {
@@ -60,13 +56,14 @@ const SearchSection = () => {
     setSearchQuery(updatedQuery);
     setShowCountryOverlay(false);
     setCountryOptions([]);
+    
+    // After country selection, show date overlay
+    setShowDateOverlay(true);
   };
 
   const checkForCountrySuggestions = async (query: string) => {
     if (!query.trim()) {
-      setShowCountryOverlay(false);
-      setCountryOptions([]);
-      return;
+      return { needsCountrySelection: false };
     }
 
     try {
@@ -76,28 +73,11 @@ const SearchSection = () => {
 
       if (error) throw error;
 
-      if (data.needsCountrySelection && data.countryOptions) {
-        setCountryOptions(data.countryOptions);
-        setShowCountryOverlay(true);
-      } else {
-        setShowCountryOverlay(false);
-        setCountryOptions([]);
-      }
+      return data;
     } catch (error) {
       console.error('Error checking countries:', error);
+      return { needsCountrySelection: false };
     }
-  };
-
-  const handleQueryChange = (value: string) => {
-    setSearchQuery(value);
-    
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      checkForCountrySuggestions(value);
-    }, 500);
   };
 
   const proceedWithSearch = async (finalQuery: string) => {
@@ -109,13 +89,6 @@ const SearchSection = () => {
       });
 
       if (error) throw error;
-
-      if (data.needsDateInfo) {
-        setPendingSearchQuery(finalQuery);
-        setShowDateOverlay(true);
-        setIsLoading(false);
-        return;
-      }
 
       navigate('/search-results', { state: { results: data.hotels, query: finalQuery } });
     } catch (error) {
@@ -132,10 +105,37 @@ const SearchSection = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() || isLoading) return;
     
-    setShowCountryOverlay(false);
-    await proceedWithSearch(searchQuery);
+    setIsLoading(true);
+    
+    try {
+      // First check if country needs to be specified
+      const countryCheck = await checkForCountrySuggestions(searchQuery);
+      
+      if (countryCheck.needsCountrySelection && countryCheck.countryOptions) {
+        setCountryOptions(countryCheck.countryOptions);
+        setShowCountryOverlay(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Check if date and people info is present
+      const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(searchQuery);
+      const hasPeopleInfo = /\b(\d+\s*(adult|people|person|guest)|room)\b/i.test(searchQuery);
+      
+      if (!hasDateInfo || !hasPeopleInfo) {
+        setShowDateOverlay(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // All info is present, proceed with search
+      await proceedWithSearch(searchQuery);
+    } catch (error) {
+      console.error('Search error:', error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,7 +149,7 @@ const SearchSection = () => {
             <textarea
               id="hotel-search"
               value={searchQuery}
-              onChange={(e) => handleQueryChange(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Describe your ideal hotel..."
               className="flex-[1_0_0] self-stretch text-black text-base font-normal leading-6 tracking-[-0.312px] resize-none border-none outline-none bg-transparent"
               disabled={isLoading}
@@ -157,11 +157,13 @@ const SearchSection = () => {
             <button
               type="submit"
               disabled={isLoading || !searchQuery.trim()}
-              className="flex justify-center items-center gap-2.5 cursor-pointer bg-[#155DFC] px-[23px] py-3 rounded-[10px] hover:bg-[#1348d4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex justify-center items-center w-12 h-12 cursor-pointer bg-[#155DFC] rounded-[10px] hover:bg-[#1348d4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Search"
             >
-              <span className="text-white text-base font-normal leading-6 tracking-[-0.312px]">
-                {isLoading ? 'Searching...' : 'Search Hotels'}
-              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
+              </svg>
             </button>
           </div>
         </form>
