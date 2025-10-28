@@ -49,17 +49,15 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: For checkOnly mode (typing), only check country ambiguity
+    // Step 1: For checkOnly mode (typing), check if country is specified
     if (checkOnly) {
       // Extract city name - handle various patterns
       let cityName = '';
       
       // Try pattern: "in [city]"
-      const cityMatch = query.match(/\bin\s+([a-z\s]+?)(?:\s+with|\s+from|\s+for|\s+on|$)/i);
+      const cityMatch = query.match(/\bin\s+([a-z\s,]+?)(?:\s+with|\s+from|\s+for|\s+on|$)/i);
       if (cityMatch && cityMatch[1].trim().length >= 3) {
-        // Clean up the city name - take only the first 1-3 words
-        const words = cityMatch[1].trim().split(/\s+/);
-        cityName = words.slice(0, Math.min(3, words.length)).join(' ');
+        cityName = cityMatch[1].trim();
       }
       
       if (!cityName) {
@@ -69,9 +67,18 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Checking city: "${cityName}"`);
+      // Check if country is already specified (contains comma)
+      if (cityName.includes(',')) {
+        console.log(`City already has country specified: "${cityName}"`);
+        return new Response(
+          JSON.stringify({ needsCountrySelection: false }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Checking city for country options: "${cityName}"`);
       
-    // Step 3: Search for location using Booking API
+    // Step 2: Search for location using Booking API
     const locationResponse = await fetch(
       `https://apidojo-booking-v1.p.rapidapi.com/locations/auto-complete?text=${encodeURIComponent(cityName)}&languagecode=en-us`,
       {
@@ -92,46 +99,43 @@ serve(async (req) => {
     }
 
     const locationData = await locationResponse.json();
-    console.log(`Location API returned ${locationData.length} results for "${cityName}":`, 
-      locationData.map((loc: any) => `${loc.label} (${loc.dest_type})`));
+    console.log(`Location API returned ${locationData.length} results for "${cityName}"`);
     
-    const cityMatches = locationData.filter((loc: any) => 
-      loc.dest_type === 'city' && 
-      loc.city_name?.toLowerCase() === cityName.toLowerCase()
-    ) || [];
+    // Get all city results and extract unique city/country combinations
+    const cityResults = locationData.filter((loc: any) => loc.dest_type === 'city');
     
-    console.log(`Found ${cityMatches.length} city matches for "${cityName}":`, cityMatches.map((c: any) => `${c.city_name}, ${c.country}`));
-
-      if (cityMatches.length > 0) {
-        const uniqueCountries = new Map();
-        cityMatches.forEach((loc: any) => {
-          const key = `${loc.city_name}-${loc.country}`;
-          if (!uniqueCountries.has(key)) {
-            uniqueCountries.set(key, {
-              city: loc.city_name,
-              country: loc.country
-            });
-          }
-        });
-
-        const countryOptions = Array.from(uniqueCountries.values());
-        
-        if (countryOptions.length > 1) {
-          return new Response(
-            JSON.stringify({ 
-              needsCountrySelection: true,
-              countryOptions
-            }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+    if (cityResults.length > 0) {
+      const uniqueCountries = new Map();
+      cityResults.forEach((loc: any) => {
+        const key = `${loc.city_name}-${loc.country}`;
+        if (!uniqueCountries.has(key)) {
+          uniqueCountries.set(key, {
+            city: loc.city_name,
+            country: loc.country
+          });
         }
-      }
+      });
 
-      return new Response(
-        JSON.stringify({ needsCountrySelection: false }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const countryOptions = Array.from(uniqueCountries.values());
+      console.log(`Found ${countryOptions.length} country options:`, countryOptions);
+      
+      // Show options if we have any cities
+      if (countryOptions.length >= 1) {
+        return new Response(
+          JSON.stringify({ 
+            needsCountrySelection: true,
+            countryOptions
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
+
+    return new Response(
+      JSON.stringify({ needsCountrySelection: false }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 
     // Step 2: For actual search, check if query has dates, rooms, and people info
     const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(query);
