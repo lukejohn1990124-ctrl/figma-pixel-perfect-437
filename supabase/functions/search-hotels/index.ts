@@ -100,12 +100,19 @@ serve(async (req) => {
     console.log('Full Mapbox response:', JSON.stringify(mapboxData, null, 2));
     
     // Extract unique city/country combinations from Mapbox results
+    // ONLY include cities that match the searched city name
     if (mapboxData.features && mapboxData.features.length > 0) {
       const uniqueCountries = new Map();
       
       mapboxData.features.forEach((feature: any) => {
         // Extract city name from the feature
         const featureCityName = feature.text || feature.place_name?.split(',')[0];
+        
+        // Only process if the city name matches the searched city name (case-insensitive)
+        if (featureCityName?.toLowerCase() !== cityName.toLowerCase()) {
+          console.log(`Skipping "${featureCityName}" - doesn't match searched city "${cityName}"`);
+          return;
+        }
         
         // Extract country from context array
         let country = '';

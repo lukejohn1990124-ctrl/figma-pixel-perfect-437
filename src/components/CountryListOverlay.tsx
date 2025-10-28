@@ -12,7 +12,7 @@ interface CountryListOverlayProps {
 
 const CountryListOverlay: React.FC<CountryListOverlayProps> = ({ options, onSelect }) => {
   return (
-    <div className="absolute left-[20px] right-[180px] bottom-[20px] bg-white rounded-[50px] border border-black shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[100] max-md:right-[160px] max-sm:right-[140px]">
+    <div className="absolute left-[20px] right-[180px] bottom-[20px] bg-white rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.16)] z-[100] max-md:right-[160px] max-sm:right-[140px]">
       <div className="px-6 py-4 overflow-x-auto max-sm:px-4">
         <div className="flex gap-3 justify-start max-sm:gap-2">
           {options.map((option, index) => (
