@@ -40,8 +40,9 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const RAPIDAPI_KEY = Deno.env.get('RAPIDAPI_KEY');
+    const MAPBOX_API_KEY = Deno.env.get('MAPBOX_API_KEY');
 
-    if (!LOVABLE_API_KEY || !RAPIDAPI_KEY) {
+    if (!LOVABLE_API_KEY || !RAPIDAPI_KEY || !MAPBOX_API_KEY) {
       console.error('Missing required API keys');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
@@ -78,46 +79,48 @@ serve(async (req) => {
 
       console.log(`Checking city for country options: "${cityName}"`);
       
-    // Step 2: Search for location using Booking API
-    const locationResponse = await fetch(
-      `https://apidojo-booking-v1.p.rapidapi.com/locations/auto-complete?text=${encodeURIComponent(cityName)}&languagecode=en-us`,
+    // Step 2: Search for location using Mapbox Geocoding API
+    const mapboxResponse = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cityName)}.json?types=place&access_token=${MAPBOX_API_KEY}&limit=10`,
       {
         method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'apidojo-booking-v1.p.rapidapi.com'
-        }
       }
     );
 
-    if (!locationResponse.ok) {
-      console.error('Location check failed:', locationResponse.status);
+    if (!mapboxResponse.ok) {
+      console.error('Mapbox API check failed:', mapboxResponse.status);
       return new Response(
         JSON.stringify({ needsCountrySelection: false }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const locationData = await locationResponse.json();
-    console.log(`Location API returned ${locationData.length} results for "${cityName}"`);
-    console.log('Full API response:', JSON.stringify(locationData, null, 2));
+    const mapboxData = await mapboxResponse.json();
+    console.log(`Mapbox API returned ${mapboxData.features?.length || 0} results for "${cityName}"`);
+    console.log('Full Mapbox response:', JSON.stringify(mapboxData, null, 2));
     
-    // Get all location results and extract unique city/country combinations
-    // Don't filter by dest_type - include all results (cities, regions, etc.)
-    if (locationData.length > 0) {
+    // Extract unique city/country combinations from Mapbox results
+    if (mapboxData.features && mapboxData.features.length > 0) {
       const uniqueCountries = new Map();
-      locationData.forEach((loc: any) => {
-        // Try multiple fields to get the city name
-        const cityName = loc.city_name || loc.label || loc.name || loc.display_name;
-        const country = loc.country || loc.country_name;
+      
+      mapboxData.features.forEach((feature: any) => {
+        // Extract city name from the feature
+        const featureCityName = feature.text || feature.place_name?.split(',')[0];
         
-        console.log(`Processing location: cityName="${cityName}", country="${country}", dest_type="${loc.dest_type}"`);
+        // Extract country from context array
+        let country = '';
+        if (feature.context) {
+          const countryContext = feature.context.find((ctx: any) => ctx.id.startsWith('country.'));
+          country = countryContext?.text || '';
+        }
         
-        if (cityName && country) {
-          const key = `${cityName}-${country}`;
+        console.log(`Processing Mapbox location: cityName="${featureCityName}", country="${country}"`);
+        
+        if (featureCityName && country) {
+          const key = `${featureCityName}-${country}`;
           if (!uniqueCountries.has(key)) {
             uniqueCountries.set(key, {
-              city: cityName,
+              city: featureCityName,
               country: country
             });
           }
