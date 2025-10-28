@@ -127,8 +127,8 @@ serve(async (req) => {
       const countryOptions = Array.from(uniqueCountries.values());
       console.log(`Found ${countryOptions.length} unique country options:`, countryOptions);
       
-      // Show options if we have any cities
-      if (countryOptions.length >= 1) {
+      // Only show options if we have multiple cities/countries to choose from
+      if (countryOptions.length > 1) {
         return new Response(
           JSON.stringify({ 
             needsCountrySelection: true,
