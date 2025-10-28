@@ -20,6 +20,7 @@ const SearchSection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleDatePeopleSubmit = (data: {
     checkIn: Date;
@@ -61,8 +62,12 @@ const SearchSection = () => {
     setShowDateOverlay(true);
   };
 
-  const checkForCountrySuggestions = async (query: string) => {
+  const checkForCountrySuggestions = async (query: string, showOverlay: boolean = true) => {
     if (!query.trim()) {
+      if (showOverlay) {
+        setShowCountryOverlay(false);
+        setCountryOptions([]);
+      }
       return { needsCountrySelection: false };
     }
 
@@ -73,11 +78,31 @@ const SearchSection = () => {
 
       if (error) throw error;
 
+      if (showOverlay && data.needsCountrySelection && data.countryOptions) {
+        setCountryOptions(data.countryOptions);
+        setShowCountryOverlay(true);
+      } else if (showOverlay) {
+        setShowCountryOverlay(false);
+        setCountryOptions([]);
+      }
+
       return data;
     } catch (error) {
       console.error('Error checking countries:', error);
       return { needsCountrySelection: false };
     }
+  };
+
+  const handleQueryChange = (value: string) => {
+    setSearchQuery(value);
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      checkForCountrySuggestions(value, true);
+    }, 500);
   };
 
   const proceedWithSearch = async (finalQuery: string) => {
@@ -111,7 +136,7 @@ const SearchSection = () => {
     
     try {
       // First check if country needs to be specified
-      const countryCheck = await checkForCountrySuggestions(searchQuery);
+      const countryCheck = await checkForCountrySuggestions(searchQuery, false);
       
       if (countryCheck.needsCountrySelection && countryCheck.countryOptions) {
         setCountryOptions(countryCheck.countryOptions);
@@ -149,7 +174,7 @@ const SearchSection = () => {
             <textarea
               id="hotel-search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Describe your ideal hotel..."
               className="flex-[1_0_0] self-stretch text-black text-base font-normal leading-6 tracking-[-0.312px] resize-none border-none outline-none bg-transparent"
               disabled={isLoading}
