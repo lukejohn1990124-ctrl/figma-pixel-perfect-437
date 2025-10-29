@@ -10,8 +10,13 @@ interface Hotel {
   review_score: number;
   review_score_word: string;
   main_photo_url: string;
-  min_total_price: number;
-  currency_code: string;
+  bookingOptions?: Array<{
+    logo: string;
+    price: number;
+    cashback?: string;
+    provider?: string;
+    booking_url?: string;
+  }>;
 }
 
 const SearchResults = () => {
@@ -84,15 +89,9 @@ const SearchResults = () => {
                   image={hotel.main_photo_url || "https://api.builder.io/api/v1/image/assets/TEMP/bb001a322531765808eb8258dadbbc9a1fde1ea9?width=624"}
                   title={hotel.hotel_name}
                   rating={hotel.review_score_word || 'Good'}
-                  score={hotel.review_score ? hotel.review_score.toFixed(1) : '8.0'}
+                  score={hotel.review_score ? hotel.review_score.toFixed(1) : '7.5'}
                   address={hotel.address}
-                  bookingOptions={[
-                    {
-                      logo: "https://api.builder.io/api/v1/image/assets/TEMP/3b2bf8bce7554227b68f32ffc71c1d6e77841610?width=300",
-                      price: Math.round(hotel.min_total_price || 200),
-                      cashback: "+1.6% cashback"
-                    }
-                  ]}
+                  bookingOptions={hotel.bookingOptions || []}
                 />
               ))}
             </div>

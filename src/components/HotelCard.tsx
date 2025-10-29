@@ -3,7 +3,7 @@ import React from 'react';
 interface BookingOption {
   logo: string;
   price: number;
-  cashback: string;
+  cashback?: string;
   provider?: string;
   booking_url?: string;
 }
