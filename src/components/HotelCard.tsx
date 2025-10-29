@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import AllRatesOverlay from './AllRatesOverlay';
 
 interface BookingOption {
   logo: string;
@@ -25,18 +26,29 @@ const HotelCard: React.FC<HotelCardProps> = ({
   address,
   bookingOptions
 }) => {
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
   const handleBookNow = (option: BookingOption) => {
     console.log('Booking hotel with option:', option);
-    // Here you would typically redirect to the booking platform
+    if (option.booking_url) {
+      window.open(option.booking_url, '_blank');
+    }
   };
 
   const handleViewAllOptions = () => {
-    console.log('View all options for:', title);
-    // Here you would typically show more booking options
+    setIsOverlayOpen(true);
   };
 
   return (
-    <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full">
+    <>
+      <AllRatesOverlay
+        isOpen={isOverlayOpen}
+        onClose={() => setIsOverlayOpen(false)}
+        hotelName={title}
+        bookingOptions={bookingOptions}
+      />
+      
+      <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full">
       <div className="flex w-[17cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
         <img
           src={image}
@@ -127,6 +139,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
         </div>
       </div>
     </article>
+    </>
   );
 };
 
