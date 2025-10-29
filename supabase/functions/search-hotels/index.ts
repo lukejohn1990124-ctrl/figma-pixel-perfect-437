@@ -219,6 +219,22 @@ serve(async (req) => {
                     type: 'array',
                     items: { type: 'string' },
                     description: 'Array of amenities. Normalize similar terms: big bed=large bed, coffee machine=coffee maker, large tv=big tv, air conditioned=air conditioning'
+                  },
+                  hotel_style: {
+                    type: 'string',
+                    description: 'Desired hotel style (e.g., luxury, boutique, modern, historic, romantic, business, budget-friendly)'
+                  },
+                  view_preference: {
+                    type: 'string',
+                    description: 'Desired view type (e.g., mountain, ocean, city, garden, lake)'
+                  },
+                  location_type: {
+                    type: 'string',
+                    description: 'Desired location characteristics (e.g., downtown, quiet, near beach, city center, secluded)'
+                  },
+                  brand_preference: {
+                    type: 'string',
+                    description: 'Specific hotel brand preference if mentioned'
                   }
                 },
                 required: ['location', 'checkin', 'checkout', 'adults'],
@@ -321,77 +337,119 @@ serve(async (req) => {
       })
     );
 
-    let processedHotels = hotelsWithPrices;
+    // Step 6: Use AI to score each hotel's similarity to the complete user query
+    console.log('Scoring hotel similarity to user query...');
+    
+    const hotelsWithSimilarity = await Promise.all(
+      hotelsWithPrices.map(async (hotel: any) => {
+        const hotelProfile = {
+          name: hotel.hotel_name,
+          brand: hotel.brand || 'Unknown',
+          view_style: hotel.view_style || 'Not specified',
+          location_description: hotel.location || 'Not specified',
+          city: hotel.city_name,
+          country: hotel.country,
+          amenities: hotel.amenities?.join(', ') || 'None listed',
+          rating_score: hotel.review_score || 'N/A',
+          rating_word: hotel.review_score_word,
+          address: hotel.address,
+          lowest_price: hotel.bookingOptions[0]?.price || 'N/A'
+        };
 
-    // Step 6: Filter and rank hotels based on amenities if provided
-    if (extractedParams.amenities && extractedParams.amenities.length > 0 && processedHotels.length > 0) {
-      // Use AI to rank hotels based on amenity matching
-      const hotelDescriptions = processedHotels.slice(0, 10).map((hotel: any, index: number) => ({
-        index,
-        name: hotel.hotel_name,
-        description: `${hotel.hotel_name} - ${hotel.review_score_word || ''} (${hotel.review_score || 'N/A'}) - Amenities: ${hotel.amenities?.join(', ') || 'None listed'}`
-      }));
-
-      const rankingResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: 'You rank hotels based on how well they match desired amenities.'
-            },
-            {
-              role: 'user',
-              content: `Desired amenities: ${extractedParams.amenities.join(', ')}\n\nHotels:\n${JSON.stringify(hotelDescriptions, null, 2)}`
-            }
-          ],
-          tools: [
-            {
-              type: 'function',
-              function: {
-                name: 'rank_hotels',
-                description: 'Rank hotels by amenity match quality',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    ranked_indices: {
-                      type: 'array',
-                      items: { type: 'number' },
-                      description: 'Array of hotel indices ordered from best to worst match'
-                    }
-                  },
-                  required: ['ranked_indices'],
-                  additionalProperties: false
+        const scoringResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert at matching hotels to user preferences. Score hotels based on how well they match ALL aspects of the user\'s search query, including style preferences, amenities, location characteristics, and overall vibe. Use semantic understanding - for example, "romantic getaway" should match luxury hotels with spas and nice views even if not explicitly romantic.'
+              },
+              {
+                role: 'user',
+                content: `User Query: "${query}"\n\nHotel Profile:\n${JSON.stringify(hotelProfile, null, 2)}`
+              }
+            ],
+            tools: [
+              {
+                type: 'function',
+                function: {
+                  name: 'score_hotel_similarity',
+                  description: 'Score how well this hotel matches the user\'s complete search query and preferences',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      similarity_score: {
+                        type: 'number',
+                        description: 'Similarity score from 0-100, where 100 is a perfect match to ALL user preferences'
+                      },
+                      reasoning: {
+                        type: 'string',
+                        description: 'Brief explanation of why this score was given'
+                      }
+                    },
+                    required: ['similarity_score', 'reasoning'],
+                    additionalProperties: false
+                  }
                 }
               }
-            }
-          ],
-          tool_choice: { type: 'function', function: { name: 'rank_hotels' } }
-        }),
-      });
+            ],
+            tool_choice: { type: 'function', function: { name: 'score_hotel_similarity' } }
+          }),
+        });
 
-      if (rankingResponse.ok) {
-        const rankingData = await rankingResponse.json();
-        const rankingToolCall = rankingData.choices[0].message.tool_calls[0];
-        const cleanedRankingArgs = cleanJsonResponse(rankingToolCall.function.arguments);
-        const { ranked_indices } = JSON.parse(cleanedRankingArgs);
-        
-        // Reorder hotels based on ranking
-        const rankedHotels = ranked_indices.map((idx: number) => processedHotels[idx]).filter(Boolean);
-        processedHotels = [...rankedHotels, ...processedHotels.filter((h: any) => !rankedHotels.includes(h))];
-        
-        console.log('Hotels ranked by amenity match');
+        let similarityScore = 50; // Default middle score
+        let reasoning = 'Default score';
+
+        if (scoringResponse.ok) {
+          const scoringData = await scoringResponse.json();
+          const scoringToolCall = scoringData.choices[0].message.tool_calls?.[0];
+          if (scoringToolCall) {
+            const cleanedScoringArgs = cleanJsonResponse(scoringToolCall.function.arguments);
+            const { similarity_score, reasoning: scoreReasoning } = JSON.parse(cleanedScoringArgs);
+            similarityScore = similarity_score;
+            reasoning = scoreReasoning;
+            console.log(`${hotel.hotel_name}: Score ${similarityScore} - ${reasoning}`);
+          }
+        }
+
+        return {
+          ...hotel,
+          similarity_score: similarityScore,
+          similarity_reasoning: reasoning
+        };
+      })
+    );
+
+    // Step 7: Sort hotels by similarity score (primary), then rating (secondary), then price (tertiary)
+    const sortedHotels = hotelsWithSimilarity.sort((a: any, b: any) => {
+      // Primary sort: similarity score (higher is better)
+      if (b.similarity_score !== a.similarity_score) {
+        return b.similarity_score - a.similarity_score;
       }
-    }
+      
+      // Secondary sort: rating score (higher is better)
+      const aRating = a.review_score || 0;
+      const bRating = b.review_score || 0;
+      if (bRating !== aRating) {
+        return bRating - aRating;
+      }
+      
+      // Tertiary sort: lowest price (lower is better)
+      const aPrice = a.bookingOptions[0]?.price || Infinity;
+      const bPrice = b.bookingOptions[0]?.price || Infinity;
+      return aPrice - bPrice;
+    });
+
+    console.log(`Sorted ${sortedHotels.length} hotels by similarity, rating, and price`);
 
     return new Response(
       JSON.stringify({ 
-        hotels: processedHotels.slice(0, 20),
+        hotels: sortedHotels.slice(0, 20),
         query: extractedParams 
       }),
       { 
