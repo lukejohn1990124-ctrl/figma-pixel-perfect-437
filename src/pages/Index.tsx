@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import SearchSection from '@/components/SearchSection';
 import HotelDealsSection from '@/components/HotelDealsSection';
+import ImportDataButton from '@/components/ImportDataButton';
 
 const Index = () => {
   return (
@@ -13,6 +14,10 @@ const Index = () => {
       />
       <div className="flex w-full min-h-screen flex-col items-start bg-[#071D5A] pb-[138px]">
         <Header />
+        
+        <div className="w-full px-5 py-4 flex justify-end">
+          <ImportDataButton />
+        </div>
         
         <main className="flex flex-col w-full">
           <HeroSection />
