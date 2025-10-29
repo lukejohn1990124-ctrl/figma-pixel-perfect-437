@@ -108,7 +108,11 @@ serve(async (req) => {
         mapboxData.features.forEach((feature: any) => {
           const featureCityName = feature.text || feature.place_name?.split(',')[0];
           
-          if (featureCityName?.toLowerCase() !== cityName.toLowerCase()) {
+          // Use more lenient matching - check if the feature name contains or is contained in the search term
+          const featureNameLower = featureCityName?.toLowerCase() || '';
+          const searchNameLower = cityName.toLowerCase();
+          
+          if (!featureNameLower.includes(searchNameLower) && !searchNameLower.includes(featureNameLower)) {
             return;
           }
           
