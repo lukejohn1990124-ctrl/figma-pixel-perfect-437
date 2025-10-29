@@ -100,6 +100,59 @@ export type Database = {
         }
         Relationships: []
       }
+      hotel_reviews: {
+        Row: {
+          cleanliness: number
+          comfort: number
+          created_at: string | null
+          facilities: number
+          food_quality: number
+          friendly_staff: number
+          hotel_id: string
+          id: string
+          location: number
+          provider_name: string
+          room_quality: number
+          value_for_money: number
+        }
+        Insert: {
+          cleanliness: number
+          comfort: number
+          created_at?: string | null
+          facilities: number
+          food_quality: number
+          friendly_staff: number
+          hotel_id: string
+          id?: string
+          location: number
+          provider_name: string
+          room_quality: number
+          value_for_money: number
+        }
+        Update: {
+          cleanliness?: number
+          comfort?: number
+          created_at?: string | null
+          facilities?: number
+          food_quality?: number
+          friendly_staff?: number
+          hotel_id?: string
+          id?: string
+          location?: number
+          provider_name?: string
+          room_quality?: number
+          value_for_money?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_reviews_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_prices: {
         Row: {
           booking_url: string | null
@@ -146,7 +199,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      hotel_rating_summary: {
+        Row: {
+          hotel_id: string | null
+          rating_score: number | null
+          rating_word: string | null
+          total_reviews: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_reviews_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
