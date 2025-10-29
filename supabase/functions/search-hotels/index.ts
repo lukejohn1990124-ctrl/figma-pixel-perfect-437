@@ -429,8 +429,16 @@ serve(async (req) => {
       })
     );
 
-    // Step 7: Sort hotels by similarity score (primary), then rating (secondary), then price (tertiary)
-    const sortedHotels = hotelsWithSimilarity.sort((a: any, b: any) => {
+    // Step 7: Filter out hotels with low similarity scores (below 50 means poor match)
+    const MIN_SIMILARITY_THRESHOLD = 50;
+    const filteredHotels = hotelsWithSimilarity.filter((hotel: any) => 
+      hotel.similarity_score >= MIN_SIMILARITY_THRESHOLD
+    );
+
+    console.log(`Filtered to ${filteredHotels.length} hotels with similarity >= ${MIN_SIMILARITY_THRESHOLD}`);
+
+    // Step 8: Sort hotels by similarity score (primary), then rating (secondary), then price (tertiary)
+    const sortedHotels = filteredHotels.sort((a: any, b: any) => {
       // Primary sort: similarity score (higher is better)
       if (b.similarity_score !== a.similarity_score) {
         return b.similarity_score - a.similarity_score;
