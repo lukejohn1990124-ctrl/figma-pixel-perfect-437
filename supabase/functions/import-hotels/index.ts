@@ -30,24 +30,24 @@ serve(async (req) => {
     const externalClient = createClient(externalUrl, externalKey);
     const localClient = createClient(localUrl!, localKey!);
 
-    // Fetch data from external database
+    // Fetch data from external database (using hyphenated table names)
     console.log('Fetching hotel options...');
     const { data: hotels, error: hotelsError } = await externalClient
-      .from('hotel_options')
+      .from('hotel-options')
       .select('*');
 
     if (hotelsError) throw hotelsError;
 
     console.log('Fetching bed types...');
     const { data: bedTypes, error: bedTypesError } = await externalClient
-      .from('bed_types')
+      .from('bed-types')
       .select('*');
 
     if (bedTypesError) throw bedTypesError;
 
     console.log('Fetching provider prices...');
     const { data: prices, error: pricesError } = await externalClient
-      .from('provider_prices')
+      .from('provider-prices')
       .select('*');
 
     if (pricesError) throw pricesError;
