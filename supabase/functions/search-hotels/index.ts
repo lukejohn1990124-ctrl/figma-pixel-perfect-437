@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,16 +40,20 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    const RAPIDAPI_KEY = Deno.env.get('RAPIDAPI_KEY');
     const MAPBOX_API_KEY = Deno.env.get('MAPBOX_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    if (!LOVABLE_API_KEY || !RAPIDAPI_KEY || !MAPBOX_API_KEY) {
+    if (!LOVABLE_API_KEY || !MAPBOX_API_KEY) {
       console.error('Missing required API keys');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Step 1: For checkOnly mode (typing), check if country is specified
     if (checkOnly) {
@@ -79,81 +84,70 @@ serve(async (req) => {
 
       console.log(`Checking city for country options: "${cityName}"`);
       
-    // Step 2: Search for location using Mapbox Geocoding API
-    const mapboxResponse = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cityName)}.json?types=place&access_token=${MAPBOX_API_KEY}&limit=10`,
-      {
-        method: 'GET',
-      }
-    );
+      // Step 2: Search for location using Mapbox Geocoding API
+      const mapboxResponse = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cityName)}.json?types=place&access_token=${MAPBOX_API_KEY}&limit=10`,
+        { method: 'GET' }
+      );
 
-    if (!mapboxResponse.ok) {
-      console.error('Mapbox API check failed:', mapboxResponse.status);
+      if (!mapboxResponse.ok) {
+        console.error('Mapbox API check failed:', mapboxResponse.status);
+        return new Response(
+          JSON.stringify({ needsCountrySelection: false }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const mapboxData = await mapboxResponse.json();
+      console.log(`Mapbox API returned ${mapboxData.features?.length || 0} results for "${cityName}"`);
+      
+      // Extract unique city/country combinations from Mapbox results
+      if (mapboxData.features && mapboxData.features.length > 0) {
+        const uniqueCountries = new Map();
+        
+        mapboxData.features.forEach((feature: any) => {
+          const featureCityName = feature.text || feature.place_name?.split(',')[0];
+          
+          if (featureCityName?.toLowerCase() !== cityName.toLowerCase()) {
+            return;
+          }
+          
+          let country = '';
+          if (feature.context) {
+            const countryContext = feature.context.find((ctx: any) => ctx.id.startsWith('country.'));
+            country = countryContext?.text || '';
+          }
+          
+          if (featureCityName && country) {
+            const key = `${featureCityName}-${country}`;
+            if (!uniqueCountries.has(key)) {
+              uniqueCountries.set(key, {
+                city: featureCityName,
+                country: country
+              });
+            }
+          }
+        });
+
+        const countryOptions = Array.from(uniqueCountries.values());
+        console.log(`Found ${countryOptions.length} unique country options:`, countryOptions);
+        
+        if (countryOptions.length > 1) {
+          return new Response(
+            JSON.stringify({ 
+              needsCountrySelection: true,
+              countryOptions
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       return new Response(
         JSON.stringify({ needsCountrySelection: false }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const mapboxData = await mapboxResponse.json();
-    console.log(`Mapbox API returned ${mapboxData.features?.length || 0} results for "${cityName}"`);
-    console.log('Full Mapbox response:', JSON.stringify(mapboxData, null, 2));
-    
-    // Extract unique city/country combinations from Mapbox results
-    // ONLY include cities that match the searched city name
-    if (mapboxData.features && mapboxData.features.length > 0) {
-      const uniqueCountries = new Map();
-      
-      mapboxData.features.forEach((feature: any) => {
-        // Extract city name from the feature
-        const featureCityName = feature.text || feature.place_name?.split(',')[0];
-        
-        // Only process if the city name matches the searched city name (case-insensitive)
-        if (featureCityName?.toLowerCase() !== cityName.toLowerCase()) {
-          console.log(`Skipping "${featureCityName}" - doesn't match searched city "${cityName}"`);
-          return;
-        }
-        
-        // Extract country from context array
-        let country = '';
-        if (feature.context) {
-          const countryContext = feature.context.find((ctx: any) => ctx.id.startsWith('country.'));
-          country = countryContext?.text || '';
-        }
-        
-        console.log(`Processing Mapbox location: cityName="${featureCityName}", country="${country}"`);
-        
-        if (featureCityName && country) {
-          const key = `${featureCityName}-${country}`;
-          if (!uniqueCountries.has(key)) {
-            uniqueCountries.set(key, {
-              city: featureCityName,
-              country: country
-            });
-          }
-        }
-      });
-
-      const countryOptions = Array.from(uniqueCountries.values());
-      console.log(`Found ${countryOptions.length} unique country options:`, countryOptions);
-      
-      // Only show options if we have multiple cities/countries to choose from
-      if (countryOptions.length > 1) {
-        return new Response(
-          JSON.stringify({ 
-            needsCountrySelection: true,
-            countryOptions
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ needsCountrySelection: false }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
 
     // Step 2: For actual search, check if query has dates, rooms, and people info
     const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(query);
@@ -167,7 +161,7 @@ serve(async (req) => {
       );
     }
 
-    // Step 2: Use Lovable AI to extract search parameters from natural language
+    // Step 3: Use Lovable AI to extract search parameters from natural language
     console.log('Processing search query with AI:', query);
     
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -258,114 +252,84 @@ serve(async (req) => {
     
     console.log('Extracted parameters:', extractedParams);
 
-    // Step 3: Search for location using Booking API
-    const locationResponse = await fetch(
-      `https://apidojo-booking-v1.p.rapidapi.com/locations/auto-complete?text=${encodeURIComponent(extractedParams.location)}&languagecode=en-us`,
-      {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'apidojo-booking-v1.p.rapidapi.com'
-        }
-      }
-    );
-
-    if (!locationResponse.ok) {
-      const errorText = await locationResponse.text();
-      console.error('Location API error:', locationResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ error: 'Failed to find location' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const locationData = await locationResponse.json();
+    // Step 4: Query local database for hotels
+    let queryBuilder = supabase
+      .from('hotel_options')
+      .select('*');
     
-    if (!locationData || locationData.length === 0) {
-      return new Response(
-        JSON.stringify({ hotels: [] }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Filter by city or hotel name if provided
+    if (extractedParams.location) {
+      queryBuilder = queryBuilder.or(`city.ilike.%${extractedParams.location}%,hotel_name.ilike.%${extractedParams.location}%`);
     }
 
-    // Step 4: Check if we need country disambiguation (multiple cities with same name)
-    const cityMatches = locationData.filter((loc: any) => 
-      loc.dest_type === 'city' && 
-      loc.city_name?.toLowerCase() === extractedParams.location.toLowerCase()
-    );
+    const { data: hotels, error } = await queryBuilder;
 
-    if (cityMatches.length > 1) {
-      // Multiple cities with same name - need country selection
-      const uniqueCountries = new Map();
-      cityMatches.forEach((loc: any) => {
-        const key = `${loc.city_name}-${loc.country}`;
-        if (!uniqueCountries.has(key)) {
-          uniqueCountries.set(key, {
-            city: loc.city_name,
-            country: loc.country
-          });
-        }
-      });
-
-      const countryOptions = Array.from(uniqueCountries.values());
-      
-      if (countryOptions.length > 1) {
-        console.log('Multiple countries found for city:', extractedParams.location);
-        return new Response(
-          JSON.stringify({ 
-            needsCountrySelection: true,
-            countryOptions
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    const destId = locationData[0].dest_id;
-    const lat = locationData[0].latitude;
-    const lon = locationData[0].longitude;
-    
-    console.log('Found destination:', { destId, lat, lon, label: locationData[0].label });
-
-    // Create a bounding box around the coordinates (approximately 20km radius)
-    const latDelta = 0.18; // ~20km
-    const lonDelta = 0.18;
-    const bbox = `${lat - latDelta},${lat + latDelta},${lon - lonDelta},${lon + lonDelta}`;
-
-    // Step 5: Search for hotels using Booking API
-    const hotelsResponse = await fetch(
-      `https://apidojo-booking-v1.p.rapidapi.com/v1/properties/list?offset=0&arrival_date=${extractedParams.checkin}&departure_date=${extractedParams.checkout}&guest_qty=${extractedParams.adults}&dest_ids=${destId}&room_qty=${extractedParams.rooms || 1}&search_type=CITY&children_qty=${extractedParams.children || 0}&price_filter_currencycode=USD&order_by=popularity&languagecode=en-us&travel_purpose=leisure`,
-      {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'apidojo-booking-v1.p.rapidapi.com'
-        }
-      }
-    );
-
-    if (!hotelsResponse.ok) {
-      const errorText = await hotelsResponse.text();
-      console.error('Hotels API error:', hotelsResponse.status, errorText);
+    if (error) {
+      console.error('Database query error:', error);
       return new Response(
         JSON.stringify({ error: 'Failed to search hotels' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const hotelsData = await hotelsResponse.json();
-    
-    console.log(`Found ${hotelsData.result?.length || 0} hotels`);
+    console.log(`Found ${hotels?.length || 0} hotels in database`);
+
+    if (!hotels || hotels.length === 0) {
+      return new Response(
+        JSON.stringify({ hotels: [], query: extractedParams }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Step 5: Get provider prices for each hotel (top 3 cheapest)
+    const hotelsWithPrices = await Promise.all(
+      hotels.map(async (hotel) => {
+        const { data: prices, error: priceError } = await supabase
+          .from('provider_prices')
+          .select('*')
+          .eq('hotel_id', hotel.id)
+          .order('price_per_night', { ascending: true })
+          .limit(3);
+
+        if (priceError) {
+          console.error('Price query error for hotel:', hotel.id, priceError);
+        }
+
+        // Format to match expected structure
+        const bookingOptions = (prices || []).map(price => ({
+          logo: price.provider_logo_url || 'https://api.builder.io/api/v1/image/assets/TEMP/booking-logo',
+          price: price.price_per_night,
+          cashback: price.cashback_percentage ? `+${price.cashback_percentage}% cashback` : '',
+          provider: price.provider_name,
+          booking_url: price.booking_url || '#'
+        }));
+
+        return {
+          hotel_id: hotel.id,
+          hotel_name: hotel.hotel_name,
+          review_score: hotel.rating_score,
+          review_score_word: hotel.rating_word || 'Good',
+          address: hotel.address,
+          main_photo_url: hotel.main_photo_url,
+          city_name: hotel.city,
+          country: hotel.country,
+          latitude: hotel.latitude,
+          longitude: hotel.longitude,
+          amenities: hotel.amenities || [],
+          bookingOptions
+        };
+      })
+    );
+
+    let processedHotels = hotelsWithPrices;
 
     // Step 6: Filter and rank hotels based on amenities if provided
-    let hotels = hotelsData.result || [];
-    
-    if (extractedParams.amenities && extractedParams.amenities.length > 0 && hotels.length > 0) {
+    if (extractedParams.amenities && extractedParams.amenities.length > 0 && processedHotels.length > 0) {
       // Use AI to rank hotels based on amenity matching
-      const hotelDescriptions = hotels.slice(0, 10).map((hotel: any, index: number) => ({
+      const hotelDescriptions = processedHotels.slice(0, 10).map((hotel: any, index: number) => ({
         index,
         name: hotel.hotel_name,
-        description: `${hotel.hotel_name} - ${hotel.review_score_word || ''} (${hotel.review_score || 'N/A'}) - ${hotel.address || ''}`
+        description: `${hotel.hotel_name} - ${hotel.review_score_word || ''} (${hotel.review_score || 'N/A'}) - Amenities: ${hotel.amenities?.join(', ') || 'None listed'}`
       }));
 
       const rankingResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -418,8 +382,8 @@ serve(async (req) => {
         const { ranked_indices } = JSON.parse(cleanedRankingArgs);
         
         // Reorder hotels based on ranking
-        const rankedHotels = ranked_indices.map((idx: number) => hotels[idx]).filter(Boolean);
-        hotels = [...rankedHotels, ...hotels.filter((h: any) => !rankedHotels.includes(h))];
+        const rankedHotels = ranked_indices.map((idx: number) => processedHotels[idx]).filter(Boolean);
+        processedHotels = [...rankedHotels, ...processedHotels.filter((h: any) => !rankedHotels.includes(h))];
         
         console.log('Hotels ranked by amenity match');
       }
@@ -427,7 +391,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        hotels: hotels.slice(0, 20),
+        hotels: processedHotels.slice(0, 20),
         query: extractedParams 
       }),
       { 

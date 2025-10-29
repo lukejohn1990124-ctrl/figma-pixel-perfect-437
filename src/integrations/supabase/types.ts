@@ -14,7 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bed_types: {
+        Row: {
+          bed_type: string
+          cost: number | null
+          created_at: string
+          hotel_id: string
+          id: string
+        }
+        Insert: {
+          bed_type: string
+          cost?: number | null
+          created_at?: string
+          hotel_id: string
+          id?: string
+        }
+        Update: {
+          bed_type?: string
+          cost?: number | null
+          created_at?: string
+          hotel_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bed_types_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_options: {
+        Row: {
+          address: string
+          amenities: string[] | null
+          brand: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          hotel_name: string
+          id: string
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          main_photo_url: string | null
+          rating_score: number | null
+          rating_word: string | null
+          view_style: string | null
+        }
+        Insert: {
+          address: string
+          amenities?: string[] | null
+          brand?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          hotel_name: string
+          id?: string
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          main_photo_url?: string | null
+          rating_score?: number | null
+          rating_word?: string | null
+          view_style?: string | null
+        }
+        Update: {
+          address?: string
+          amenities?: string[] | null
+          brand?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          hotel_name?: string
+          id?: string
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          main_photo_url?: string | null
+          rating_score?: number | null
+          rating_word?: string | null
+          view_style?: string | null
+        }
+        Relationships: []
+      }
+      provider_prices: {
+        Row: {
+          booking_url: string | null
+          cashback_percentage: number | null
+          currency: string | null
+          hotel_id: string
+          id: string
+          last_updated: string
+          price_per_night: number
+          provider_logo_url: string | null
+          provider_name: string
+        }
+        Insert: {
+          booking_url?: string | null
+          cashback_percentage?: number | null
+          currency?: string | null
+          hotel_id: string
+          id?: string
+          last_updated?: string
+          price_per_night: number
+          provider_logo_url?: string | null
+          provider_name: string
+        }
+        Update: {
+          booking_url?: string | null
+          cashback_percentage?: number | null
+          currency?: string | null
+          hotel_id?: string
+          id?: string
+          last_updated?: string
+          price_per_night?: number
+          provider_logo_url?: string | null
+          provider_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_prices_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
