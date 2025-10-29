@@ -30,7 +30,7 @@ serve(async (req) => {
     const externalClient = createClient(externalUrl, externalKey);
     const localClient = createClient(localUrl!, localKey!);
 
-    // Fetch data from external database (using hyphenated table names)
+    // Fetch data from external database (hotel-options uses hyphen, others use underscores)
     console.log('Fetching hotel options...');
     const { data: hotels, error: hotelsError } = await externalClient
       .from('hotel-options')
@@ -40,14 +40,14 @@ serve(async (req) => {
 
     console.log('Fetching bed types...');
     const { data: bedTypes, error: bedTypesError } = await externalClient
-      .from('bed-types')
+      .from('bed_types')
       .select('*');
 
     if (bedTypesError) throw bedTypesError;
 
     console.log('Fetching provider prices...');
     const { data: prices, error: pricesError } = await externalClient
-      .from('provider-prices')
+      .from('provider_prices')
       .select('*');
 
     if (pricesError) throw pricesError;
