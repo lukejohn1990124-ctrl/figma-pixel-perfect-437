@@ -239,6 +239,10 @@ serve(async (req) => {
                   brand_preference: {
                     type: 'string',
                     description: 'Specific hotel brand preference if mentioned'
+                  },
+                  minimum_rating: {
+                    type: 'number',
+                    description: 'Minimum acceptable rating score (0-10 scale). Extract from phrases like "at least 7.5/10", "rating above 8", "7+ rating", etc.'
                   }
                 },
                 required: ['location', 'checkin', 'checkout', 'adults'],
@@ -342,11 +346,20 @@ serve(async (req) => {
     );
 
     // Filter out hotels without any pricing data
-    const hotelsWithValidPrices = hotelsWithPrices.filter(hotel => 
+    let hotelsWithValidPrices = hotelsWithPrices.filter(hotel => 
       hotel.bookingOptions && hotel.bookingOptions.length > 0
     );
 
     console.log(`Filtered to ${hotelsWithValidPrices.length} hotels with pricing data`);
+
+    // Apply minimum rating filter if specified
+    if (extractedParams.minimum_rating) {
+      const beforeRatingFilter = hotelsWithValidPrices.length;
+      hotelsWithValidPrices = hotelsWithValidPrices.filter(hotel => 
+        hotel.review_score && hotel.review_score >= extractedParams.minimum_rating
+      );
+      console.log(`Applied minimum rating filter (${extractedParams.minimum_rating}): ${beforeRatingFilter} -> ${hotelsWithValidPrices.length} hotels`);
+    }
 
     if (hotelsWithValidPrices.length === 0) {
       return new Response(
