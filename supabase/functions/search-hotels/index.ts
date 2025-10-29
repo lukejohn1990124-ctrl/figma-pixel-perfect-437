@@ -307,7 +307,7 @@ serve(async (req) => {
         return {
           hotel_id: hotel.id,
           hotel_name: hotel.hotel_name,
-          review_score: hotel.rating_score ? hotel.rating_score / 10 : null,
+          review_score: hotel.rating_score,
           review_score_word: hotel.rating_word || 'Good',
           address: hotel.address,
           main_photo_url: hotel.main_photo_url,
