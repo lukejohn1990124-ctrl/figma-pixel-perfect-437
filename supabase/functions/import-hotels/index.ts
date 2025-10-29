@@ -36,21 +36,27 @@ serve(async (req) => {
       .from('hotel-options')
       .select('*');
 
-    if (hotelsError) throw hotelsError;
+    if (hotelsError) {
+      console.log('Hotel options error:', hotelsError);
+    }
 
     console.log('Fetching bed types...');
     const { data: bedTypes, error: bedTypesError } = await externalClient
       .from('bed_types')
       .select('*');
 
-    if (bedTypesError) throw bedTypesError;
+    if (bedTypesError) {
+      console.log('Bed types error (skipping):', bedTypesError);
+    }
 
     console.log('Fetching provider prices...');
     const { data: prices, error: pricesError } = await externalClient
       .from('provider_prices')
       .select('*');
 
-    if (pricesError) throw pricesError;
+    if (pricesError) {
+      console.log('Provider prices error (skipping):', pricesError);
+    }
 
     // Import into local database
     let imported = { hotels: 0, bedTypes: 0, prices: 0 };
