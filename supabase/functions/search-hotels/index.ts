@@ -341,11 +341,25 @@ serve(async (req) => {
       })
     );
 
+    // Filter out hotels without any pricing data
+    const hotelsWithValidPrices = hotelsWithPrices.filter(hotel => 
+      hotel.bookingOptions && hotel.bookingOptions.length > 0
+    );
+
+    console.log(`Filtered to ${hotelsWithValidPrices.length} hotels with pricing data`);
+
+    if (hotelsWithValidPrices.length === 0) {
+      return new Response(
+        JSON.stringify({ hotels: [], query: extractedParams }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Step 6: Use AI to score each hotel's similarity to the complete user query
     console.log('Scoring hotel similarity to user query...');
     
     const hotelsWithSimilarity = await Promise.all(
-      hotelsWithPrices.map(async (hotel: any) => {
+      hotelsWithValidPrices.map(async (hotel: any) => {
         const hotelProfile = {
           name: hotel.hotel_name,
           brand: hotel.brand || 'Unknown',
