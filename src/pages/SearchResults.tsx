@@ -19,6 +19,15 @@ interface Hotel {
   }>;
 }
 
+const getRatingWord = (score: number): string => {
+  if (score >= 9.0) return 'Exceptional';
+  if (score >= 8.0) return 'Excellent';
+  if (score >= 7.0) return 'Very Good';
+  if (score >= 6.0) return 'Good';
+  if (score >= 5.0) return 'Pleasant';
+  return 'Poor';
+};
+
 const SearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,7 +94,7 @@ const SearchResults = () => {
                   key={hotel.hotel_id}
                   image={hotel.main_photo_url || "https://api.builder.io/api/v1/image/assets/TEMP/bb001a322531765808eb8258dadbbc9a1fde1ea9?width=624"}
                   title={hotel.hotel_name}
-                  rating={hotel.review_score_word || 'Good'}
+                  rating={getRatingWord(hotel.review_score)}
                   score={hotel.review_score ? hotel.review_score.toFixed(1) : '7.5'}
                   address={hotel.address}
                   bookingOptions={hotel.bookingOptions || []}

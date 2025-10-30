@@ -50,8 +50,8 @@ const HotelCard: React.FC<HotelCardProps> = ({
       
       <article className="flex items-center shrink-0 w-full justify-center max-md:h-auto max-sm:w-full">
       <div className="flex w-full max-w-[900px] items-stretch border bg-white rounded-[20px] border-solid border-black shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] overflow-hidden max-md:flex-col max-md:w-full max-sm:w-full">
-        {/* Hotel Image - 1/3 width */}
-        <div className="relative w-[300px] flex-shrink-0 max-md:w-full max-md:h-[240px]">
+        {/* Hotel Image - 5.5cm width */}
+        <div className="relative w-[5.5cm] flex-shrink-0 max-md:w-full max-md:h-[240px]">
           <img
             src={image}
             alt={`${title} interior`}
@@ -75,7 +75,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
           <div className="h-px w-full bg-black" />
           
           <div className="flex items-center gap-2">
-            <span className="text-black text-[18px] font-normal leading-[20px] tracking-[-0.54px]">
+            <span className="text-black text-[18px] font-bold leading-[20px] tracking-[-0.54px]">
               {rating}
             </span>
             <div className="flex min-w-[48px] justify-center items-center bg-black px-3 py-1.5 rounded-[8px]">
@@ -100,11 +100,11 @@ const HotelCard: React.FC<HotelCardProps> = ({
         {/* Vertical Divider */}
         <div className="w-px bg-black max-md:hidden" />
         
-        {/* Booking Options - wider to balance */}
-        <div className="flex flex-col items-start justify-start gap-2.5 flex-1 pt-4 pb-4 px-5 max-md:w-full max-md:border-t max-md:border-black max-sm:w-full">
+        {/* Booking Options - narrower width */}
+        <div className="flex flex-col items-start justify-start gap-2.5 w-[280px] flex-shrink-0 pt-4 pb-4 px-4 max-md:w-full max-md:border-t max-md:border-black max-sm:w-full">
           {bookingOptions.slice(0, 3).map((option, index) => (
             <div key={index} className="flex flex-col gap-1.5 w-full">
-              <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center justify-between gap-2 w-full">
                 <div className="flex flex-col items-start gap-0.5">
                   <img
                     src={option.logo}
@@ -123,7 +123,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
                 </div>
                 <button
                   onClick={() => handleBookNow(option)}
-                  className="flex h-[40px] justify-center items-center gap-1.5 cursor-pointer bg-[#0000FF] px-5 py-2 rounded-full hover:bg-[#0000CC] transition-colors whitespace-nowrap"
+                  className="flex h-[40px] justify-center items-center gap-1.5 cursor-pointer bg-[#0000FF] px-4 py-2 rounded-full hover:bg-[#0000CC] transition-colors whitespace-nowrap"
                 >
                   <span className="text-white text-[14px] font-bold leading-[16px]">
                     Book Now
