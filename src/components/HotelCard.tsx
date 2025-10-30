@@ -49,7 +49,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
       />
       
       <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full">
-      <div className="flex w-[17cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
+      <div className="flex w-[17cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
         <div className="relative w-[5.44cm] h-[6.4cm] max-md:w-full max-md:h-[200px]">
           <img
             src={image}
