@@ -48,9 +48,9 @@ const HotelCard: React.FC<HotelCardProps> = ({
         bookingOptions={bookingOptions}
       />
       
-      <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full">
-      <div className="flex w-[17cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
-        <div className="relative w-[5.44cm] h-[6.4cm] max-md:w-full max-md:h-[200px]">
+      <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full w-full justify-center">
+      <div className="flex w-full max-w-[1200px] min-h-[240px] items-start border bg-white rounded-[20px] border-solid border-black shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
+        <div className="relative w-[280px] min-h-[240px] flex-shrink-0 max-md:w-full max-md:h-[200px]">
           <img
             src={image}
             alt={`${title} interior`}
@@ -66,7 +66,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
           </div>
         </div>
         
-        <div className="flex w-[6.2cm] flex-col items-start gap-2 self-stretch pt-3 pb-3 px-5 max-md:w-full max-sm:w-full">
+        <div className="flex flex-1 flex-col items-start gap-2 self-stretch pt-3 pb-3 px-5 min-w-[240px] max-md:w-full max-sm:w-full">
           <h3 className="text-black text-[20px] font-bold leading-[22px] tracking-[-0.6px] line-clamp-2">
             {title}
           </h3>
@@ -97,7 +97,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
         
         <div className="w-px self-stretch bg-[rgba(0,0,0,0.10)] max-md:hidden" />
         
-        <div className="flex flex-col items-start gap-3 self-stretch p-5 max-md:w-full max-md:pt-3 max-sm:w-full">
+        <div className="flex flex-1 flex-col items-start gap-3 self-stretch p-5 min-w-[260px] max-md:w-full max-md:pt-3 max-sm:w-full">
           {bookingOptions.slice(0, 3).map((option, index) => (
             <React.Fragment key={index}>
               <div className="flex items-center gap-4 w-full max-sm:flex-col max-sm:gap-3">
