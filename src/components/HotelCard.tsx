@@ -67,8 +67,8 @@ const HotelCard: React.FC<HotelCardProps> = ({
           </div>
         </div>
         
-        {/* Hotel Info - 1/3 width */}
-        <div className="flex flex-col items-start justify-start gap-2 w-[300px] flex-shrink-0 pt-4 pb-4 px-5 max-md:w-full max-sm:w-full">
+        {/* Hotel Info - narrower width */}
+        <div className="flex flex-col items-start justify-start gap-2 w-[220px] flex-shrink-0 pt-4 pb-4 px-4 max-md:w-full max-sm:w-full">
           <h3 className="text-black text-[20px] font-bold leading-[24px] tracking-[-0.6px] line-clamp-2">
             {title}
           </h3>
@@ -91,7 +91,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
             <svg className="w-[18px] h-[18px] mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="black"/>
             </svg>
-            <address className="text-black text-[14px] font-normal leading-[18px] tracking-[-0.42px] not-italic line-clamp-4 flex-1">
+            <address className="text-black text-[14px] font-normal leading-[18px] tracking-[-0.42px] not-italic flex-1">
               {address}
             </address>
           </div>
@@ -100,8 +100,8 @@ const HotelCard: React.FC<HotelCardProps> = ({
         {/* Vertical Divider */}
         <div className="w-px bg-black max-md:hidden" />
         
-        {/* Booking Options - 1/3 width */}
-        <div className="flex flex-col items-start justify-start gap-2.5 w-[300px] flex-shrink-0 pt-4 pb-4 px-5 max-md:w-full max-md:border-t max-md:border-black max-sm:w-full">
+        {/* Booking Options - wider to balance */}
+        <div className="flex flex-col items-start justify-start gap-2.5 flex-1 pt-4 pb-4 px-5 max-md:w-full max-md:border-t max-md:border-black max-sm:w-full">
           {bookingOptions.slice(0, 3).map((option, index) => (
             <div key={index} className="flex flex-col gap-1.5 w-full">
               <div className="flex items-center justify-between gap-3 w-full">
