@@ -50,11 +50,21 @@ const HotelCard: React.FC<HotelCardProps> = ({
       
       <article className="flex items-center shrink-0 max-md:h-auto max-sm:w-full">
       <div className="flex w-[17cm] h-[6.4cm] items-start border bg-white rounded-[20px] border-solid border-black max-md:flex-col max-md:w-full max-md:h-auto max-sm:w-full">
-        <img
-          src={image}
-          alt={`${title} interior`}
-          className="w-[5.44cm] h-[6.4cm] rounded-l-[20px] object-cover max-md:w-full max-md:h-[200px] max-md:rounded-t-[20px] max-md:rounded-bl-none max-sm:w-full"
-        />
+        <div className="relative w-[5.44cm] h-[6.4cm] max-md:w-full max-md:h-[200px]">
+          <img
+            src={image}
+            alt={`${title} interior`}
+            className="w-full h-full rounded-l-[20px] object-cover max-md:rounded-t-[20px] max-md:rounded-bl-none max-sm:w-full"
+          />
+          <div className="absolute bottom-3 right-3 flex justify-center items-center w-10 h-10 bg-white rounded-md border border-black cursor-pointer hover:bg-gray-50 transition-colors">
+            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="6" height="6" fill="black"/>
+              <rect x="12" y="2" width="6" height="6" fill="black"/>
+              <rect x="2" y="12" width="6" height="6" fill="black"/>
+              <rect x="12" y="12" width="6" height="6" fill="black"/>
+            </svg>
+          </div>
+        </div>
         
         <div className="flex w-[6.2cm] flex-col items-start gap-2 self-stretch pt-3 pb-3 px-5 max-md:w-full max-sm:w-full">
           <h3 className="text-black text-[20px] font-bold leading-[22px] tracking-[-0.6px] line-clamp-2">
@@ -125,17 +135,12 @@ const HotelCard: React.FC<HotelCardProps> = ({
             </React.Fragment>
           ))}
           
-          {bookingOptions.length > 3 && (
-            <button
-              onClick={handleViewAllOptions}
-              className="text-black text-[14px] font-normal leading-[16px] tracking-[-0.39px] cursor-pointer hover:opacity-70 transition-opacity mt-1 flex items-center gap-1"
-            >
-              <span>View All Rates</span>
-              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                <path d="M6 3v6M3 6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={handleViewAllOptions}
+            className="text-black text-[14px] font-normal leading-[16px] tracking-[-0.39px] cursor-pointer hover:opacity-70 transition-opacity mt-1"
+          >
+            View All Rates
+          </button>
         </div>
       </div>
     </article>
