@@ -49,7 +49,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
       />
       
       <article className="flex items-center shrink-0 w-full justify-center max-md:h-auto max-sm:w-full">
-      <div className="flex w-full max-w-[900px] items-stretch border bg-white rounded-[20px] border-solid border-black shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] overflow-hidden max-md:flex-col max-md:w-full max-sm:w-full">
+      <div className="flex w-full max-w-[750px] items-stretch border bg-white rounded-[20px] border-solid border-black shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] overflow-hidden max-md:flex-col max-md:w-full max-sm:w-full">
         {/* Hotel Image - 5.5cm width */}
         <div className="relative w-[5.5cm] flex-shrink-0 max-md:w-full max-md:h-[240px]">
           <img
@@ -75,7 +75,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
           <div className="h-px w-full bg-black" />
           
           <div className="flex items-center gap-2">
-            <span className="text-black text-[18px] font-bold leading-[20px] tracking-[-0.54px]">
+            <span className="text-black text-[18px] font-medium leading-[20px] tracking-[-0.54px]">
               {rating}
             </span>
             <div className="flex min-w-[48px] justify-center items-center bg-black px-3 py-1.5 rounded-[8px]">
@@ -116,7 +116,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
                     <span className="font-normal text-[14px] leading-[16px]">/night</span>
                   </div>
                   {option.cashback && (
-                    <div className="text-[#8B5CF6] text-[12px] font-normal leading-[14px]">
+                    <div className="text-[#8B5CF6] text-[14px] font-bold leading-[16px]">
                       {option.cashback}
                     </div>
                   )}
