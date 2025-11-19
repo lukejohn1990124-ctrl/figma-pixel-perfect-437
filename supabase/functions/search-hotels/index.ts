@@ -32,9 +32,29 @@ serve(async (req) => {
   try {
     const { query, checkOnly = false } = await req.json();
     
-    if (!query) {
+    // Input validation for security
+    if (!query || typeof query !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Query is required' }),
+        JSON.stringify({ error: 'Query is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Enforce maximum length to prevent resource exhaustion
+    const MAX_QUERY_LENGTH = 1000;
+    if (query.length > MAX_QUERY_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: `Query too long (maximum ${MAX_QUERY_LENGTH} characters)` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize the query by trimming whitespace
+    const sanitizedQuery = query.trim();
+    
+    if (sanitizedQuery.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Query cannot be empty' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -61,7 +81,7 @@ serve(async (req) => {
       let cityName = '';
       
       // Try pattern: "in [city]"
-      const cityMatch = query.match(/\bin\s+([a-z\s,]+?)(?:\s+with|\s+from|\s+for|\s+on|$)/i);
+      const cityMatch = sanitizedQuery.match(/\bin\s+([a-z\s,]+?)(?:\s+with|\s+from|\s+for|\s+on|$)/i);
       if (cityMatch && cityMatch[1].trim().length >= 3) {
         cityName = cityMatch[1].trim();
       }
@@ -154,8 +174,8 @@ serve(async (req) => {
     }
 
     // Step 2: For actual search, check if query has dates, rooms, and people info
-    const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(query);
-    const hasPeopleInfo = /\b(\d+\s*(adult|people|person|guest)|room)\b/i.test(query);
+    const hasDateInfo = /\b(from|to|check-?in|check-?out|january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(sanitizedQuery);
+    const hasPeopleInfo = /\b(\d+\s*(adult|people|person|guest)|room)\b/i.test(sanitizedQuery);
 
     if (!hasDateInfo || !hasPeopleInfo) {
       console.log('Missing date or people information');
@@ -166,7 +186,7 @@ serve(async (req) => {
     }
 
     // Step 3: Use Lovable AI to extract search parameters from natural language
-    console.log('Processing search query with AI:', query);
+    console.log('Processing search query with AI:', sanitizedQuery);
     
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -183,7 +203,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: query
+            content: sanitizedQuery
           }
         ],
         tools: [
@@ -402,7 +422,7 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: `User Query: "${query}"\n\nHotel Profile:\n${JSON.stringify(hotelProfile, null, 2)}`
+                content: `User Query: "${sanitizedQuery}"\n\nHotel Profile:\n${JSON.stringify(hotelProfile, null, 2)}`
               }
             ],
             tools: [
