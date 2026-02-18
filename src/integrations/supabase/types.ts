@@ -46,6 +46,93 @@ export type Database = {
           },
         ]
       }
+      email_provider_config: {
+        Row: {
+          api_key: string | null
+          created_at: string
+          from_email: string | null
+          from_name: string | null
+          id: string
+          is_configured: boolean
+          provider: string
+          smtp_host: string | null
+          smtp_pass: string | null
+          smtp_port: number | null
+          smtp_user: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_configured?: boolean
+          provider: string
+          smtp_host?: string | null
+          smtp_pass?: string | null
+          smtp_port?: number | null
+          smtp_user?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_configured?: boolean
+          provider?: string
+          smtp_host?: string | null
+          smtp_pass?: string | null
+          smtp_port?: number | null
+          smtp_user?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          custom_html: string
+          id: string
+          name: string
+          subject: string
+          type: string
+          updated_at: string
+          user_id: string
+          variables: Json | null
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          custom_html?: string
+          id?: string
+          name: string
+          subject?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+          variables?: Json | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          custom_html?: string
+          id?: string
+          name?: string
+          subject?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       hotel_options: {
         Row: {
           address: string
@@ -153,6 +240,93 @@ export type Database = {
           },
         ]
       }
+      integrations: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          last_synced_at: string | null
+          provider: string
+          refresh_token: string | null
+          updated_at: string
+          user_id: string
+          user_identifier: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_synced_at?: string | null
+          provider: string
+          refresh_token?: string | null
+          updated_at?: string
+          user_id: string
+          user_identifier?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_synced_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          updated_at?: string
+          user_id?: string
+          user_identifier?: string | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          client_email: string | null
+          client_name: string
+          created_at: string
+          due_date: string | null
+          external_id: string | null
+          id: string
+          invoice_number: string
+          last_reminder_sent: string | null
+          payment_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          client_email?: string | null
+          client_name: string
+          created_at?: string
+          due_date?: string | null
+          external_id?: string | null
+          id?: string
+          invoice_number: string
+          last_reminder_sent?: string | null
+          payment_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_email?: string | null
+          client_name?: string
+          created_at?: string
+          due_date?: string | null
+          external_id?: string | null
+          id?: string
+          invoice_number?: string
+          last_reminder_sent?: string | null
+          payment_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -220,6 +394,68 @@ export type Database = {
             columns: ["hotel_id"]
             isOneToOne: false
             referencedRelation: "hotel_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminder_queue: {
+        Row: {
+          amount: number
+          bulk_group_id: string | null
+          client_email: string | null
+          client_id: string | null
+          client_name: string
+          created_at: string
+          days_overdue: number
+          id: string
+          invoice_id: string | null
+          invoice_number: string
+          recipient_emails: string[] | null
+          schedule_type: string
+          scheduled_date: string
+          template_name: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          bulk_group_id?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name: string
+          created_at?: string
+          days_overdue?: number
+          id?: string
+          invoice_id?: string | null
+          invoice_number: string
+          recipient_emails?: string[] | null
+          schedule_type?: string
+          scheduled_date: string
+          template_name?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bulk_group_id?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          days_overdue?: number
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string
+          recipient_emails?: string[] | null
+          schedule_type?: string
+          scheduled_date?: string
+          template_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_queue_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
