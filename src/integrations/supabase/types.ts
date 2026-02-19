@@ -462,6 +462,39 @@ export type Database = {
       }
     }
     Views: {
+      email_provider_config_safe: {
+        Row: {
+          created_at: string | null
+          from_email: string | null
+          from_name: string | null
+          id: string | null
+          is_configured: boolean | null
+          provider: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string | null
+          is_configured?: boolean | null
+          provider?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string | null
+          is_configured?: boolean | null
+          provider?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       hotel_rating_summary: {
         Row: {
           hotel_id: string | null
@@ -478,6 +511,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      integrations_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_connected: boolean | null
+          last_synced_at: string | null
+          provider: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_identifier: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          is_connected?: boolean | null
+          last_synced_at?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_identifier?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          is_connected?: boolean | null
+          last_synced_at?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_identifier?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
