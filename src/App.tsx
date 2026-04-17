@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Connections from "./pages/Connections";
 import PayPalDashboard from "./pages/PayPalDashboard";
+import PayPalCallback from "./pages/PayPalCallback";
 import RemindersPage from "./pages/settings/Reminders";
 import TemplatesPage from "./pages/settings/Templates";
 import IntegrationsPage from "./pages/settings/Integrations";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/connections" element={<Connections />} />
             <Route path="/paypal" element={<PayPalDashboard />} />
+            <Route path="/connections/paypal/callback" element={<PayPalCallback />} />
             <Route path="/settings/reminders" element={<RemindersPage />} />
             <Route path="/settings/templates" element={<TemplatesPage />} />
             <Route path="/settings/integrations" element={<IntegrationsPage />} />
