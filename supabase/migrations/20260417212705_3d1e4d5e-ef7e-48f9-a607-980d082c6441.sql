@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS invoices_user_external_unique ON public.invoices (user_id, external_id) WHERE external_id IS NOT NULL;
