@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import DashboardNav from "@/components/DashboardNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePayPalOAuthCallback } from "@/hooks/usePayPalOAuthCallback";
 
 interface Invoice {
   id: string;
@@ -52,6 +53,8 @@ export default function DashboardPage() {
       fetchData();
     }
   }, [user, loading, navigate]);
+
+  usePayPalOAuthCallback({ enabled: !!user, onSuccess: () => fetchData() });
 
   const fetchData = async () => {
     setLoadingData(true);
