@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, Link2, Loader2, RefreshCw } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { supabase } from "@/integrations/supabase/client";
