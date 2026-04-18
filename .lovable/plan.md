@@ -1,30 +1,33 @@
 
-The user signed in to PayPal sandbox but landed back at `/connections` with no "connected" indicator. The expected flow is PayPal → `/connections/paypal/callback` → exchange code → redirect to `/paypal`. Since they ended on `/connections`, the callback route likely never fired, OR it fired but the exchange failed silently, OR the redirect URI in the PayPal app is set to `/connections` instead of `/connections/paypal/callback`.
+The user authorized PayPal but landed on `/dashboard` (not `/connections` or `/connections/paypal/callback`). This means PayPal's app Return URL is set to `/dashboard`, so the OAuth `?code=` arrives there and nothing handles it.
 
-Looking at edge function logs: only Boot/Shutdown events — no actual invocation logs for `paypal-oauth` exchange_code. This strongly suggests PayPal redirected to `/connections` (not `/connections/paypal/callback`), so the callback page never ran and no exchange happened.
+Two issues:
+1. `/dashboard` doesn't read the `?code=` param.
+2. Even if we add handling on `/dashboard`, the `redirect_uri` passed to PayPal during token exchange must EXACTLY match the one registered/used at authorize time. Currently `handleConnectPayPal` sends `${origin}/connections/paypal/callback` as `redirect_uri`, but PayPal is redirecting to `/dashboard` — meaning PayPal's app config overrides ours OR the user manually changed it.
 
-Root cause: the PayPal sandbox app's Return URL is set to `/connections` instead of `/connections/paypal/callback`. We can fix this two ways:
-1. User updates the Return URL in PayPal dashboard
-2. We make `/connections` itself detect a `?code=` param and handle the exchange (more robust — works regardless of which URL is registered)
-
-Option 2 is more user-friendly. I'll do both: handle the code on `/connections` AND keep the dedicated callback route as a backup.
+Robust fix: make the OAuth callback handler universal — detect `?code=` on ANY landing page (Dashboard, Connections, Callback) and reconstruct the exact `redirect_uri` PayPal used (which is `window.location.origin + window.location.pathname` at the moment of callback). Also send the SAME `redirect_uri` when first generating the auth URL by storing it in sessionStorage, so token exchange matches.
 
 ## Plan
 
-1. **Update `src/pages/Connections.tsx`** to:
-   - On mount, check `useSearchParams` for `?code=` and `?state=`
-   - If present, call `paypal-oauth` with `action: exchange_code` using `${origin}/connections` as `redirect_uri`
-   - Show a loading toast, then success/error toast
-   - Clean URL params and reload integration list to show connected state
-   - Keep existing connect/disconnect/sync logic unchanged
+1. **Create `src/hooks/usePayPalOAuthCallback.tsx`** — a reusable hook that:
+   - Reads `?code=` / `?error=` / `?state=` from URL
+   - Reads stored `redirect_uri` from sessionStorage (saved when Connect was clicked)
+   - Calls `paypal-oauth` with `action: exchange_code` using stored URI
+   - Shows toast, cleans URL params, optionally calls a refresh callback
+   - Uses ref to run once
 
-2. **Update `supabase/functions/paypal-oauth/index.ts`** — no changes needed; it already accepts any redirect_uri the client passes.
+2. **Update `src/pages/Connections.tsx`**:
+   - Replace inline OAuth handling with the hook
+   - Save `redirect_uri` to sessionStorage before redirecting to PayPal
+   - Use current registered URI: `${origin}/connections` (most likely registered)
 
-3. **Tell the user** to also add `/connections` as a valid Return URL in their PayPal app (or alternatively fix it to `/connections/paypal/callback`). Either now works.
+3. **Update `src/pages/Dashboard.tsx`**: mount the hook so if PayPal redirects there, the code is exchanged and a toast shown, then user can navigate to Connections.
 
-4. **Verify** by clicking Connect → authorize → land on `/connections` → see green checkmark + "Connected as ..." + sync button.
+4. **Tell the user**: in PayPal Developer Dashboard → app → set Return URL to exactly `https://figma-pixel-perfect-437.lovable.app/connections` (and remove `/dashboard` if present). The new code will tolerate either, but matching is cleaner.
+
+5. **Verify** by reconnecting end-to-end.
 
 Files touched:
-- `src/pages/Connections.tsx` (handle inline OAuth callback)
-
-No DB or edge function changes required.
+- `src/hooks/usePayPalOAuthCallback.tsx` (new)
+- `src/pages/Connections.tsx`
+- `src/pages/Dashboard.tsx`
