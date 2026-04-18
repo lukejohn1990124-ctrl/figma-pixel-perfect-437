@@ -54,7 +54,7 @@ export default function DashboardPage() {
     }
   }, [user, loading, navigate]);
 
-  usePayPalOAuthCallback({ enabled: !!user, onSuccess: fetchData });
+  usePayPalOAuthCallback({ enabled: !!user, onSuccess: () => fetchData() });
 
   const fetchData = async () => {
     setLoadingData(true);
