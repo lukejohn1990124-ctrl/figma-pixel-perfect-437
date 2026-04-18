@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Link2, Loader2, RefreshCw } from "lucide-react";
 import DashboardNav from "@/components/DashboardNav";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { usePayPalOAuthCallback, savePayPalRedirectUri } from "@/hooks/usePayPalOAuthCallback";
 
 interface Integration {
   id: string;
@@ -52,10 +52,8 @@ const integrationConfigs: Integration[] = [
 
 export default function ConnectionsPage() {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [connectedProviders, setConnectedProviders] = useState<Record<string, { identifier: string | null; lastSynced: string | null }>>({});
   const [busy, setBusy] = useState<string | null>(null);
-  const exchangedRef = useRef(false);
 
   const loadIntegrations = async () => {
     if (!user) return;
@@ -79,40 +77,7 @@ export default function ConnectionsPage() {
     loadIntegrations();
   }, [user]);
 
-  // Handle PayPal OAuth redirect landing on /connections with ?code=
-  useEffect(() => {
-    if (!user) return;
-    const code = searchParams.get("code");
-    const errParam = searchParams.get("error");
-    if (!code && !errParam) return;
-    if (exchangedRef.current) return;
-    exchangedRef.current = true;
-
-    if (errParam) {
-      toast.error(`PayPal error: ${errParam}`);
-      setSearchParams({}, { replace: true });
-      return;
-    }
-
-    const redirectUri = `${window.location.origin}/connections`;
-    setBusy("paypal");
-    const t = toast.loading("Connecting PayPal...");
-    supabase.functions
-      .invoke("paypal-oauth", {
-        body: { action: "exchange_code", code, redirect_uri: redirectUri },
-      })
-      .then(({ data, error }) => {
-        toast.dismiss(t);
-        if (error || data?.error) {
-          toast.error(data?.error || error?.message || "Connection failed");
-        } else {
-          toast.success("PayPal connected!");
-        }
-        setSearchParams({}, { replace: true });
-        setBusy(null);
-        loadIntegrations();
-      });
-  }, [user, searchParams, setSearchParams]);
+  usePayPalOAuthCallback({ enabled: !!user, onSuccess: loadIntegrations });
 
   const handleConnectPayPal = async () => {
     if (!user) {
@@ -121,7 +86,8 @@ export default function ConnectionsPage() {
     }
     setBusy("paypal");
     try {
-      const redirectUri = `${window.location.origin}/connections/paypal/callback`;
+      const redirectUri = `${window.location.origin}/connections`;
+      savePayPalRedirectUri(redirectUri);
       const { data, error } = await supabase.functions.invoke("paypal-oauth", {
         body: { action: "get_auth_url", redirect_uri: redirectUri },
       });
