@@ -1,33 +1,32 @@
 
-The user authorized PayPal but landed on `/dashboard` (not `/connections` or `/connections/paypal/callback`). This means PayPal's app Return URL is set to `/dashboard`, so the OAuth `?code=` arrives there and nothing handles it.
+PayPal returns "invalid client_id or redirect_uri". The client_id matches what was configured, so the issue is the redirect_uri. PayPal requires the **exact** redirect_uri (the "Return URL") to be registered in the app's "Log in with PayPal" settings — not just whitelisted as a generic Return URL.
 
-Two issues:
-1. `/dashboard` doesn't read the `?code=` param.
-2. Even if we add handling on `/dashboard`, the `redirect_uri` passed to PayPal during token exchange must EXACTLY match the one registered/used at authorize time. Currently `handleConnectPayPal` sends `${origin}/connections/paypal/callback` as `redirect_uri`, but PayPal is redirecting to `/dashboard` — meaning PayPal's app config overrides ours OR the user manually changed it.
+Two common causes:
+1. The Return URL registered in the PayPal app doesn't exactly match `https://figma-pixel-perfect-437.lovable.app/connections` (trailing slash, http vs https, www, or different path).
+2. The "Log in with PayPal" feature isn't enabled on the app, or the required scopes (openid, profile, email, invoicing) aren't checked. Without "Log in with PayPal" enabled, the `/connect` endpoint rejects the client_id.
 
-Robust fix: make the OAuth callback handler universal — detect `?code=` on ANY landing page (Dashboard, Connections, Callback) and reconstruct the exact `redirect_uri` PayPal used (which is `window.location.origin + window.location.pathname` at the moment of callback). Also send the SAME `redirect_uri` when first generating the auth URL by storing it in sessionStorage, so token exchange matches.
+## Fix (user action in PayPal Developer Dashboard)
 
-## Plan
+Go to developer.paypal.com → Apps & Credentials → Sandbox → open the app with client_id starting `Af8gOHUyk...`:
 
-1. **Create `src/hooks/usePayPalOAuthCallback.tsx`** — a reusable hook that:
-   - Reads `?code=` / `?error=` / `?state=` from URL
-   - Reads stored `redirect_uri` from sessionStorage (saved when Connect was clicked)
-   - Calls `paypal-oauth` with `action: exchange_code` using stored URI
-   - Shows toast, cleans URL params, optionally calls a refresh callback
-   - Uses ref to run once
+1. Scroll to **"Log in with PayPal"** → click the checkbox to enable it → click **Advanced Settings**.
+2. Under **Return URL**, enter exactly: `https://figma-pixel-perfect-437.lovable.app/connections` (no trailing slash, https, exact case).
+3. Check the scopes: **Full Name**, **Email**, and any "Personal info" needed.
+4. Save.
+5. Also confirm under app features: **Invoicing** is enabled.
+6. Wait ~30 seconds for PayPal to propagate, then retry Connect.
 
-2. **Update `src/pages/Connections.tsx`**:
-   - Replace inline OAuth handling with the hook
-   - Save `redirect_uri` to sessionStorage before redirecting to PayPal
-   - Use current registered URI: `${origin}/connections` (most likely registered)
+## Code-side safety improvement
 
-3. **Update `src/pages/Dashboard.tsx`**: mount the hook so if PayPal redirects there, the code is exchanged and a toast shown, then user can navigate to Connections.
+To make the client send a redirect_uri that always matches what's registered, no change is strictly required — `${origin}/connections` already produces the correct URL on production. But to be defensive against preview vs production domains, I'll:
 
-4. **Tell the user**: in PayPal Developer Dashboard → app → set Return URL to exactly `https://figma-pixel-perfect-437.lovable.app/connections` (and remove `/dashboard` if present). The new code will tolerate either, but matching is cleaner.
+1. **Add a constant `PAYPAL_REDIRECT_URI`** in `src/pages/Connections.tsx` that uses the published domain explicitly when running on a Lovable preview subdomain, so the URI sent to PayPal always matches what's registered (`https://figma-pixel-perfect-437.lovable.app/connections`). Otherwise use `${origin}/connections`.
 
-5. **Verify** by reconnecting end-to-end.
+2. Pass this same constant to both `get_auth_url` and `savePayPalRedirectUri`, so the token exchange uses the identical value.
 
 Files touched:
-- `src/hooks/usePayPalOAuthCallback.tsx` (new)
-- `src/pages/Connections.tsx`
-- `src/pages/Dashboard.tsx`
+- `src/pages/Connections.tsx` (compute canonical redirect URI)
+
+No DB or edge function changes.
+
+After the user updates the PayPal app settings, the Connect flow should land on PayPal's consent screen (not the error), then redirect back with `?code=`, which the existing `usePayPalOAuthCallback` hook will exchange.
