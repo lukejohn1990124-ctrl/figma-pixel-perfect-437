@@ -79,6 +79,17 @@ export default function ConnectionsPage() {
 
   usePayPalOAuthCallback({ enabled: !!user, onSuccess: loadIntegrations });
 
+  const getPayPalRedirectUri = () => {
+    const host = window.location.hostname;
+    // Use the canonical published domain when on a Lovable preview subdomain,
+    // since PayPal only accepts the exact registered Return URL.
+    const isPreview = host.endsWith(".lovable.app") && host !== "figma-pixel-perfect-437.lovable.app";
+    const origin = isPreview
+      ? "https://figma-pixel-perfect-437.lovable.app"
+      : window.location.origin;
+    return `${origin}/connections`;
+  };
+
   const handleConnectPayPal = async () => {
     if (!user) {
       toast.error("Please sign in first");
@@ -86,7 +97,7 @@ export default function ConnectionsPage() {
     }
     setBusy("paypal");
     try {
-      const redirectUri = `${window.location.origin}/connections`;
+      const redirectUri = getPayPalRedirectUri();
       savePayPalRedirectUri(redirectUri);
       const { data, error } = await supabase.functions.invoke("paypal-oauth", {
         body: { action: "get_auth_url", redirect_uri: redirectUri },
